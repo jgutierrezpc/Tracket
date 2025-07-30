@@ -125,6 +125,7 @@ export default function Dashboard() {
         <SportTabs 
           selectedSport={selectedSport} 
           onSportChange={setSelectedSport} 
+          activities={activities}
         />
 
         {/* Recent Activities */}

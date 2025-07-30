@@ -61,7 +61,8 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
         else level = 1;
       }
       
-      const dayOfWeek = currentDate.getDay();
+      // Convert Sunday (0) to be day 6, Monday (1) to be day 0, etc.
+      const dayOfWeek = currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1;
       
       cells.push({
         date: dateStr,
@@ -179,20 +180,22 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
         </div>
       </div>
       
-      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg overflow-x-auto">        
-        <div className="flex">
-          {/* Day labels (left side) */}
-          <div className="flex flex-col justify-start text-xs text-gray-600 dark:text-gray-400 pr-3">
-            <div className="h-4 mb-2"></div> {/* Space for month labels */}
-            {dayNames.map((day, i) => (
-              <div key={i} className="h-3 mb-1 flex items-center">
-                {i % 2 === 1 ? day.substring(0, 3) : ''} {/* Show only odd days for spacing */}
-              </div>
-            ))}
+      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">        
+        <div className="relative">
+          {/* Sticky day labels (left side) */}
+          <div className="absolute left-0 top-0 z-10 bg-gray-50 dark:bg-gray-800">
+            <div className="flex flex-col justify-start text-xs text-gray-600 dark:text-gray-400 pr-3">
+              <div className="h-4 mb-2"></div> {/* Space for month labels */}
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
+                <div key={i} className="h-3 mb-1 flex items-center min-w-[32px]">
+                  {i % 2 === 0 ? day : ''} {/* Show Mon, Wed, Fri, Sun */}
+                </div>
+              ))}
+            </div>
           </div>
           
-          {/* Heatmap grid */}
-          <div className="flex flex-col">
+          {/* Scrollable heatmap container */}
+          <div className="overflow-x-auto ml-12">
             {/* Month labels */}
             <div className="flex mb-2 h-4">
               {weeks.map((_, weekIndex) => {
