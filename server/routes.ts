@@ -92,10 +92,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const totalMinutes = activities.reduce((sum, activity) => sum + activity.duration, 0);
       const totalHours = Math.round(totalMinutes / 60);
       
-      const ratedActivities = activities.filter(a => a.sessionRating && a.sessionRating > 0);
-      const averageRating = ratedActivities.length > 0 
-        ? Number((ratedActivities.reduce((sum, a) => sum + (a.sessionRating || 0), 0) / ratedActivities.length).toFixed(1))
+      const averageDuration = totalActivities > 0 
+        ? Math.round(totalMinutes / totalActivities)
         : 0;
+
+      // Calculate training:tournament ratio
+      const trainingAndFriendlyCount = activities.filter(a => 
+        a.activityType === 'training' || a.activityType === 'friendly' || !a.activityType
+      ).length;
+      const tournamentCount = activities.filter(a => a.activityType === 'tournament').length;
+      const trainingTournamentRatio = tournamentCount > 0 
+        ? Number((trainingAndFriendlyCount / tournamentCount).toFixed(1))
+        : trainingAndFriendlyCount;
 
       const sportStats = activities.reduce((acc, activity) => {
         acc[activity.sport] = (acc[activity.sport] || 0) + 1;
@@ -105,7 +113,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         totalActivities,
         totalHours,
-        averageRating,
+        averageDuration,
+        trainingTournamentRatio,
         sportStats
       });
     } catch (error) {

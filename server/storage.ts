@@ -55,7 +55,18 @@ export class MemStorage implements IStorage {
   async createActivity(insertActivity: InsertActivity): Promise<Activity> {
     const id = randomUUID();
     const activity: Activity = {
-      ...insertActivity,
+      date: insertActivity.date,
+      sport: insertActivity.sport,
+      duration: insertActivity.duration,
+      activityType: insertActivity.activityType || null,
+      clubName: insertActivity.clubName || null,
+      clubLocation: insertActivity.clubLocation || null,
+      clubMapLink: insertActivity.clubMapLink || null,
+      sessionRating: insertActivity.sessionRating || null,
+      racket: insertActivity.racket || null,
+      partner: insertActivity.partner || null,
+      opponents: insertActivity.opponents || null,
+      notes: insertActivity.notes || null,
       id,
       createdAt: new Date(),
     };

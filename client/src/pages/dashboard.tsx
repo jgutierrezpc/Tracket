@@ -4,11 +4,11 @@ import { Activity } from "@shared/schema";
 import { parseCsvText, csvRowToActivity, CSV_DATA } from "@/lib/csv-parser";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import ActivityHeatmap from "@/components/activity-heatmap";
-import AddActivityForm from "@/components/add-activity-form";
-import RecentActivities from "@/components/recent-activities";
-import SportTabs from "@/components/sport-tabs";
-import StatsOverview from "@/components/stats-overview";
+import ActivityHeatmap from "../components/activity-heatmap";
+import AddActivityForm from "../components/add-activity-form";
+import RecentActivities from "../components/recent-activities";
+import SportTabs from "../components/sport-tabs";
+import StatsOverview from "../components/stats-overview";
 import { useState } from "react";
 import { Moon, Sun, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -19,8 +19,7 @@ export default function Dashboard() {
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
-      return localStorage.getItem('theme') === 'dark' || 
-        (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      return localStorage.getItem('theme') === 'dark';
     }
     return false;
   });
@@ -47,7 +46,13 @@ export default function Dashboard() {
   });
 
   // Fetch statistics
-  const { data: stats } = useQuery({
+  const { data: stats } = useQuery<{
+    totalActivities: number;
+    totalHours: number;
+    averageDuration: number;
+    trainingTournamentRatio: number;
+    sportStats: Record<string, number>;
+  }>({
     queryKey: ['/api/activities/stats/overview'],
   });
 

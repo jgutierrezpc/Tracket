@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X } from "lucide-react";
 import { z } from "zod";
+import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 
 const formSchema = insertActivitySchema.extend({
   date: z.string().min(1, "Date is required"),
@@ -94,6 +95,12 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
 
   return (
     <div className="p-6">
+      {/* Hidden accessibility elements */}
+      <DialogTitle className="sr-only">Add New Activity</DialogTitle>
+      <DialogDescription className="sr-only">
+        Add a new padel, tennis, or pickleball activity with details like duration, racket, and club information.
+      </DialogDescription>
+      
       {/* Handle */}
       <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
       
