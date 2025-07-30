@@ -184,10 +184,10 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
         <div className="relative">
           {/* Sticky day labels (left side) */}
           <div className="absolute left-0 top-0 z-10 bg-gray-50 dark:bg-gray-800">
-            <div className="flex flex-col justify-start text-xs text-gray-600 dark:text-gray-400 pr-3">
+            <div className="flex flex-col justify-start text-xs text-gray-600 dark:text-gray-400 pr-1">
               <div className="h-4 mb-2"></div> {/* Space for month labels */}
               {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
-                <div key={i} className="h-3 mb-1 flex items-center min-w-[32px]">
+                <div key={i} className="h-3 mb-1 flex items-center min-w-[28px]">
                   {i % 2 === 0 ? day : ''} {/* Show Mon, Wed, Fri, Sun */}
                 </div>
               ))}
@@ -195,7 +195,7 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
           </div>
           
           {/* Scrollable heatmap container */}
-          <div className="overflow-x-auto ml-12">
+          <div className="overflow-x-auto ml-8">
             {/* Month labels */}
             <div className="flex mb-2 h-4">
               {weeks.map((_, weekIndex) => {
