@@ -210,12 +210,12 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
             
             {/* Days grid - organized as rows (weekdays) by columns (weeks) */}
             {[0, 1, 2, 3, 4, 5, 6].map(dayOfWeek => (
-              <div key={dayOfWeek} className="flex mb-1">
+              <div key={dayOfWeek} className="flex gap-1 mb-1">
                 {weeks.map((week, weekIndex) => {
                   const cell = week[dayOfWeek];
                   
                   if (!cell) {
-                    return <div key={weekIndex} className="w-3 h-3 mr-1" />;
+                    return <div key={weekIndex} className="w-3 h-3" />;
                   }
                   
                   const levelColors = [
@@ -229,7 +229,7 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
                   return (
                     <div
                       key={weekIndex}
-                      className={`w-3 h-3 rounded-sm mr-1 ${levelColors[cell.level]} cursor-pointer hover:opacity-80`}
+                      className={`w-3 h-3 rounded-sm ${levelColors[cell.level]} cursor-pointer hover:opacity-80`}
                       title={`${cell.date}: ${cell.minutes} minutes`}
                       data-testid={`heatmap-cell-${cell.date}`}
                     />
