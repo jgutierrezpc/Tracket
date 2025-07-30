@@ -149,9 +149,9 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
               className="h-8 w-8"
               data-testid="button-prev-year"
             >
-              <ChevronLeft className="h-4 w-2" />
+              <ChevronLeft className="h-4 w-4" />
             </Button>
-            <span className="text-sm font-medium text-center">
+            <span className="text-sm font-medium min-w-[4rem] text-center">
               {selectedYear}
             </span>
             <Button
@@ -168,26 +168,26 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
           {/* Legend */}
           <div className="flex items-center space-x-2 text-xs text-gray-600 dark:text-gray-400">
             <span>Less</span>
-            <div className="flex space-x-0.5">
-              <div className="w-1.5 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-200 dark:bg-green-900 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-400 dark:bg-green-700 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-600 dark:bg-green-500 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-800 dark:bg-green-300 rounded-sm"></div>
+            <div className="flex space-x-1">
+              <div className="w-3 h-3 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-200 dark:bg-green-900 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-400 dark:bg-green-700 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-600 dark:bg-green-500 rounded-sm"></div>
+              <div className="w-3 h-3 bg-green-800 dark:bg-green-300 rounded-sm"></div>
             </div>
             <span>More</span>
           </div>
         </div>
       </div>
       
-      <div className="dark:bg-gray-800 p-0 rounded-lg">        
+      <div className="bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">        
         <div className="relative">
           {/* Sticky day labels (left side) */}
-          <div className="absolute left-0 top-0 dark:bg-gray-800">
-            <div className="flex flex-col justify-start text-xs text-gray-600 dark:text-gray-400">
+          <div className="absolute left-0 top-0 z-10 bg-gray-50 dark:bg-gray-800">
+            <div className="flex flex-col justify-start text-xs text-gray-600 dark:text-gray-400 pr-3">
               <div className="h-4 mb-2"></div> {/* Space for month labels */}
-              {['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'].map((day, i) => (
-                <div key={i} className="h-3 mb-1 flex items-center">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, i) => (
+                <div key={i} className="h-3 mb-1 flex items-center min-w-[32px]">
                   {i % 2 === 0 ? day : ''} {/* Show Mon, Wed, Fri, Sun */}
                 </div>
               ))}
@@ -209,13 +209,13 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
             </div>
             
             {/* Days grid - organized as rows (weekdays) by columns (weeks) */}
-            {[1, 2, 3, 4, 5, 6, 0].map(dayOfWeek => (
+            {[0, 1, 2, 3, 4, 5, 6].map(dayOfWeek => (
               <div key={dayOfWeek} className="flex mb-1">
                 {weeks.map((week, weekIndex) => {
                   const cell = week[dayOfWeek];
                   
                   if (!cell) {
-                    return <div key={weekIndex} className="w-3 h-3" />;
+                    return <div key={weekIndex} className="w-3 h-3 mr-1" />;
                   }
                   
                   const levelColors = [
