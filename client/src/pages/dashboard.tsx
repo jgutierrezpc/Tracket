@@ -130,8 +130,7 @@ export default function Dashboard() {
 
       {/* Bottom Navigation */}
       <nav className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
-        <div className="flex items-center justify-around py-2 relative">
-          {/* Left navigation items */}
+        <div className="flex items-center justify-around py-2">
           <button className="flex flex-col items-center p-2 text-primary" data-testid="nav-stats">
             <div className="text-lg">📊</div>
             <span className="text-xs mt-1">Stats</span>
@@ -140,24 +139,6 @@ export default function Dashboard() {
             <div className="text-lg">📋</div>
             <span className="text-xs mt-1">Activities</span>
           </button>
-          
-          {/* Center Add Button */}
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetTrigger asChild>
-              <Button
-                className="w-12 h-12 bg-primary text-white rounded-full shadow-lg hover:bg-secondary transition-colors"
-                size="icon"
-                data-testid="button-add-activity"
-              >
-                <Plus className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl p-0">
-              <AddActivityForm onClose={() => setIsSheetOpen(false)} />
-            </SheetContent>
-          </Sheet>
-          
-          {/* Right navigation items */}
           <button className="flex flex-col items-center p-2 text-gray-400" data-testid="nav-courts">
             <div className="text-lg">📍</div>
             <span className="text-xs mt-1">Courts</span>
@@ -168,6 +149,22 @@ export default function Dashboard() {
           </button>
         </div>
       </nav>
+
+      {/* Floating Action Button */}
+      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        <SheetTrigger asChild>
+          <Button
+            className="fixed bottom-20 right-4 w-14 h-14 bg-primary text-white rounded-full shadow-lg hover:bg-secondary transition-colors z-20"
+            size="icon"
+            data-testid="button-add-activity"
+          >
+            <Plus className="h-6 w-6" />
+          </Button>
+        </SheetTrigger>
+        <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl p-0">
+          <AddActivityForm onClose={() => setIsSheetOpen(false)} />
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
