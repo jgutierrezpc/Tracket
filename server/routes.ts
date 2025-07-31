@@ -102,7 +102,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ).length;
       const tournamentCount = activities.filter(a => a.activityType === 'tournament').length;
       const trainingTournamentRatio = tournamentCount > 0 
-        ? Number((trainingAndFriendlyCount / tournamentCount).toFixed(1))
+        ? Number((trainingAndFriendlyCount / tournamentCount).toFixed(0))
         : trainingAndFriendlyCount;
 
       const sportStats = activities.reduce((acc, activity) => {

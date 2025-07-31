@@ -68,9 +68,9 @@ export default function RecentActivities({ activities, isLoading }: RecentActivi
 
   const getActivityTypeColor = (type: string) => {
     switch (type) {
-      case 'tournament': return 'bg-accent';
-      case 'training': return 'bg-secondary';
-      case 'friendly': return 'bg-primary';
+      case 'tournament': return 'bg-gray-100';
+      case 'training': return 'bg-gray-100';
+      case 'friendly': return 'bg-gray-100';
       default: return 'bg-primary';
     }
   };

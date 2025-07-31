@@ -36,19 +36,19 @@ export default function StatsOverview({ stats }: StatsOverviewProps) {
           <div className="text-xs text-gray-600 dark:text-gray-400">Total Sessions</div>
         </div>
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
-          <div className="text-2xl font-bold text-secondary" data-testid="stat-total-hours">
+          <div className="text-2xl font-bold text-primary" data-testid="stat-total-hours">
             {stats.totalHours}
           </div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Hours Played</div>
         </div>
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
-          <div className="text-2xl font-bold text-accent" data-testid="stat-average-duration">
+          <div className="text-2xl font-bold text-primary" data-testid="stat-average-duration">
             {stats.averageDuration}
           </div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Avg. Session Duration</div>
         </div>
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
-          <div className="text-2xl font-bold text-purple-600" data-testid="stat-training-tournament-ratio">
+          <div className="text-2xl font-bold text-primary" data-testid="stat-training-tournament-ratio">
             {stats.trainingTournamentRatio}:1
           </div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Training:Tournament Ratio</div>
