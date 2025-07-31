@@ -85,7 +85,7 @@ export default function RecentActivities({ activities, isLoading }: RecentActivi
             key={i}
             className={`text-xs ${i < rating ? 'text-yellow-400' : 'text-gray-300'}`}
           >
-            ⭐
+            🔥
           </span>
         ))}
       </div>
@@ -139,7 +139,7 @@ export default function RecentActivities({ activities, isLoading }: RecentActivi
                   )}
                   {activity.racket && (
                     <span data-testid={`activity-racket-${activity.id}`}>
-                      🎾 {activity.racket}
+                      • {activity.racket}
                     </span>
                   )}
                 </div>

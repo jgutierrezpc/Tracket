@@ -88,9 +88,9 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
   };
 
   const sports = [
-    { id: 'padel', name: 'Padel', icon: '🏓' },
-    { id: 'tennis', name: 'Tennis', icon: '🎾' },
-    { id: 'pickleball', name: 'Pickleball', icon: '🏓' },
+    { id: 'padel', name: 'Padel', icon: '🔵' },
+    { id: 'tennis', name: 'Tennis', icon: '🟢' },
+    { id: 'pickleball', name: 'Pickleball', icon: '🟡' },
   ];
 
   return (
