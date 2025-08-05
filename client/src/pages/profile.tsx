@@ -9,14 +9,14 @@ import AddActivityForm from "../components/add-activity-form";
 import RecentActivities from "../components/recent-activities";
 import SportTabs from "../components/sport-tabs";
 import StatsOverview from "../components/stats-overview";
+import BottomNavigation from "../components/bottom-navigation";
 import { useState } from "react";
-import { Moon, Sun, Plus } from "lucide-react";
+import { Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { useNavigation } from "@/hooks/use-navigation";
 
-export default function Dashboard() {
+export default function Profile() {
   const [selectedSport, setSelectedSport] = useState<string>("all");
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isDark, setIsDark] = useState(() => {
     if (typeof window !== 'undefined') {
       return localStorage.getItem('theme') === 'dark';
@@ -25,6 +25,7 @@ export default function Dashboard() {
   });
   
   const { toast } = useToast();
+  const { getCurrentPage } = useNavigation();
 
   // Initialize theme
   useEffect(() => {
@@ -95,10 +96,10 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-white dark:bg-gray-900 shadow-lg">
       {/* Header */}
-      <header className="bg-primary text-white p-4 sticky top-0 z-30">
-        <div className="flex items-center justify-between">
+      <header className="bg-white text-black p-2 sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700">
+        <div className="flex items-center justify-center">
           <div className="flex items-center space-x-3">
-            <h1 className="text-xl font-medium">Tracket</h1>
+            <h1 className="text-lg font-medium">You</h1>
           </div>
         </div>
       </header>
@@ -122,6 +123,7 @@ export default function Dashboard() {
         <RecentActivities 
           activities={filteredActivities} 
           isLoading={activitiesLoading} 
+          isOwnActivities={true}
         />
 
         {/* Bottom spacing for FAB */}
@@ -129,45 +131,7 @@ export default function Dashboard() {
       </main>
 
       {/* Bottom Navigation */}
-      <nav className="bg-white dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 sticky bottom-0">
-        <div className="flex items-center justify-around py-2 relative">
-          {/* Left navigation items */}
-          <button className="flex flex-col items-center p-2 text-primary" data-testid="nav-stats">
-            <div className="text-lg">📊</div>
-            <span className="text-xs mt-1">Stats</span>
-          </button>
-          <button className="flex flex-col items-center p-2 text-gray-400" data-testid="nav-activities">
-            <div className="text-lg">📋</div>
-            <span className="text-xs mt-1">Activities</span>
-          </button>
-          
-          {/* Center Add Button */}
-          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-            <SheetTrigger asChild>
-              <Button
-                className="w-12 h-12 bg-primary text-white rounded-full shadow-lg hover:bg-secondary transition-colors"
-                size="icon"
-                data-testid="button-add-activity"
-              >
-                <Plus className="h-6 w-6" />
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl p-0">
-              <AddActivityForm onClose={() => setIsSheetOpen(false)} />
-            </SheetContent>
-          </Sheet>
-          
-          {/* Right navigation items */}
-          <button className="flex flex-col items-center p-2 text-gray-400" data-testid="nav-courts">
-            <div className="text-lg">📍</div>
-            <span className="text-xs mt-1">Courts</span>
-          </button>
-          <button className="flex flex-col items-center p-2 text-gray-400" data-testid="nav-profile">
-            <div className="text-lg">👤</div>
-            <span className="text-xs mt-1">Profile</span>
-          </button>
-        </div>
-      </nav>
+      <BottomNavigation currentPage={getCurrentPage()} />
     </div>
   );
-}
+} 

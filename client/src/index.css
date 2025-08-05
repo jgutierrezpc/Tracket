@@ -13,7 +13,7 @@
   --card-foreground: hsl(20, 14.3%, 4.1%);
   --border: hsl(20, 5.9%, 90%);
   --input: hsl(20, 5.9%, 90%);
-  --primary: hsl(180, 100%, 25%);
+  --primary: lab(48.26% -28.84 -8.48);
   --primary-foreground: hsl(211, 100%, 99%);
   --secondary: hsl(180, 100%, 14%);
   --secondary-foreground: hsl(120, 100%, 99%);

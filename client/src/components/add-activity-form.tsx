@@ -94,7 +94,7 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
   ];
 
   return (
-    <div className="p-6">
+    <div className="w-full max-w-md mx-auto h-full flex flex-col">
       {/* Hidden accessibility elements */}
       <DialogTitle className="sr-only">Add New Activity</DialogTitle>
       <DialogDescription className="sr-only">
@@ -102,194 +102,196 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
       </DialogDescription>
       
       {/* Handle */}
-      <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6"></div>
+      <div className="w-12 h-1 bg-gray-300 dark:bg-gray-600 rounded-full mx-auto mb-6 flex-shrink-0"></div>
       
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mb-6 px-4 flex-shrink-0">
         <h2 className="text-xl font-medium">Add Activity</h2>
       </div>
 
-      {/* Form */}
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        
-        {/* Date */}
-        <div>
-          <Label htmlFor="date">Date</Label>
-          <Input
-            id="date"
-            type="date"
-            {...form.register("date")}
-            data-testid="input-date"
-          />
-          {form.formState.errors.date && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.date.message}</p>
-          )}
-        </div>
-
-        {/* Sport Selection */}
-        <div>
-          <Label>Sport</Label>
-          <div className="grid grid-cols-3 gap-2 mt-2">
-            {sports.map(sport => (
-              <Button
-                key={sport.id}
-                type="button"
-                variant={selectedSport === sport.id ? "default" : "outline"}
-                className={`p-3 h-auto flex flex-col ${
-                  selectedSport === sport.id 
-                    ? 'bg-primary text-white border-primary' 
-                    : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400'
-                }`}
-                onClick={() => {
-                  setSelectedSport(sport.id);
-                  form.setValue("sport", sport.id);
-                }}
-                data-testid={`sport-${sport.id}`}
-              >
-                <div className="text-lg mb-1">{sport.icon}</div>
-                <div className="text-sm">{sport.name}</div>
-              </Button>
-            ))}
+      {/* Scrollable Form Container */}
+      <div className="flex-1 overflow-y-auto">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 px-4 pb-6">
+          
+          {/* Date */}
+          <div>
+            <Label htmlFor="date">Date</Label>
+            <Input
+              id="date"
+              type="date"
+              {...form.register("date")}
+              data-testid="input-date"
+            />
+            {form.formState.errors.date && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.date.message}</p>
+            )}
           </div>
-        </div>
 
-        {/* Activity Type */}
-        <div>
-          <Label htmlFor="activityType">Activity Type</Label>
-          <Select 
-            onValueChange={(value) => form.setValue("activityType", value)}
-            defaultValue="friendly"
+          {/* Sport Selection */}
+          <div>
+            <Label>Sport</Label>
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              {sports.map(sport => (
+                <Button
+                  key={sport.id}
+                  type="button"
+                  variant={selectedSport === sport.id ? "default" : "outline"}
+                  className={`p-3 h-auto flex flex-col ${
+                    selectedSport === sport.id 
+                      ? 'bg-primary text-white border-primary' 
+                      : 'border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-400'
+                  }`}
+                  onClick={() => {
+                    setSelectedSport(sport.id);
+                    form.setValue("sport", sport.id);
+                  }}
+                  data-testid={`sport-${sport.id}`}
+                >
+                  <div className="text-lg mb-1">{sport.icon}</div>
+                  <div className="text-sm">{sport.name}</div>
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Activity Type */}
+          <div>
+            <Label htmlFor="activityType">Activity Type</Label>
+            <Select 
+              onValueChange={(value) => form.setValue("activityType", value)}
+              defaultValue="friendly"
+            >
+              <SelectTrigger data-testid="select-activity-type">
+                <SelectValue placeholder="Select activity type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="training">Training</SelectItem>
+                <SelectItem value="friendly">Friendly Match</SelectItem>
+                <SelectItem value="tournament">Tournament</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Duration */}
+          <div>
+            <Label htmlFor="duration">Duration (minutes)</Label>
+            <Input
+              id="duration"
+              type="number"
+              placeholder="90"
+              min="1"
+              max="300"
+              {...form.register("duration", { valueAsNumber: true })}
+              data-testid="input-duration"
+            />
+            {form.formState.errors.duration && (
+              <p className="text-sm text-red-500 mt-1">{form.formState.errors.duration.message}</p>
+            )}
+          </div>
+
+          {/* Racket */}
+          <div>
+            <Label htmlFor="racket">Racket Brand/Model (Optional)</Label>
+            <Input
+              id="racket"
+              placeholder="Wilson Bela Elite V2.5"
+              {...form.register("racket")}
+              data-testid="input-racket"
+            />
+          </div>
+
+          {/* Club Name */}
+          <div>
+            <Label htmlFor="clubName">Club Name (Optional)</Label>
+            <Input
+              id="clubName"
+              placeholder="Padel Town"
+              {...form.register("clubName")}
+              data-testid="input-club-name"
+            />
+          </div>
+
+          {/* Club Location */}
+          <div>
+            <Label htmlFor="clubLocation">Club Location (Optional)</Label>
+            <Input
+              id="clubLocation"
+              placeholder="Al Quoz Industrial Area 2 - Dubai"
+              {...form.register("clubLocation")}
+              data-testid="input-club-location"
+            />
+          </div>
+
+          {/* Partner */}
+          <div>
+            <Label htmlFor="partner">Partner (Optional)</Label>
+            <Input
+              id="partner"
+              placeholder="Partner name"
+              {...form.register("partner")}
+              data-testid="input-partner"
+            />
+          </div>
+
+          {/* Opponents */}
+          <div>
+            <Label htmlFor="opponents">Opponents (Optional)</Label>
+            <Input
+              id="opponents"
+              placeholder="Opponent names"
+              {...form.register("opponents")}
+              data-testid="input-opponents"
+            />
+          </div>
+
+          {/* Session Rating */}
+          <div>
+            <Label>Session Rating</Label>
+            <div className="flex space-x-2 mt-2">
+              {[1, 2, 3, 4, 5].map(rating => (
+                <Button
+                  key={rating}
+                  type="button"
+                  variant={sessionRating >= rating ? "default" : "outline"}
+                  size="icon"
+                  className={`w-12 h-12 ${
+                    sessionRating >= rating 
+                      ? 'bg-yellow-400 border-yellow-400 text-white hover:bg-yellow-500' 
+                      : 'border-gray-200 dark:border-gray-600 text-gray-400 hover:border-yellow-400 hover:text-yellow-400'
+                  }`}
+                  onClick={() => setSessionRating(rating)}
+                  data-testid={`rating-${rating}`}
+                >
+                  ⭐
+                </Button>
+              ))}
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div>
+            <Label htmlFor="notes">Notes (Optional)</Label>
+            <Textarea
+              id="notes"
+              placeholder="Add any notes about your session..."
+              rows={3}
+              className="resize-none"
+              {...form.register("notes")}
+              data-testid="textarea-notes"
+            />
+          </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            className="w-full bg-primary text-white hover:bg-blue-700 transition-colors mt-6"
+            disabled={createActivityMutation.isPending}
+            data-testid="button-submit-activity"
           >
-            <SelectTrigger data-testid="select-activity-type">
-              <SelectValue placeholder="Select activity type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="training">Training</SelectItem>
-              <SelectItem value="friendly">Friendly Match</SelectItem>
-              <SelectItem value="tournament">Tournament</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Duration */}
-        <div>
-          <Label htmlFor="duration">Duration (minutes)</Label>
-          <Input
-            id="duration"
-            type="number"
-            placeholder="90"
-            min="1"
-            max="300"
-            {...form.register("duration", { valueAsNumber: true })}
-            data-testid="input-duration"
-          />
-          {form.formState.errors.duration && (
-            <p className="text-sm text-red-500 mt-1">{form.formState.errors.duration.message}</p>
-          )}
-        </div>
-
-        {/* Racket */}
-        <div>
-          <Label htmlFor="racket">Racket Brand/Model (Optional)</Label>
-          <Input
-            id="racket"
-            placeholder="Wilson Bela Elite V2.5"
-            {...form.register("racket")}
-            data-testid="input-racket"
-          />
-        </div>
-
-        {/* Club Name */}
-        <div>
-          <Label htmlFor="clubName">Club Name (Optional)</Label>
-          <Input
-            id="clubName"
-            placeholder="Padel Town"
-            {...form.register("clubName")}
-            data-testid="input-club-name"
-          />
-        </div>
-
-        {/* Club Location */}
-        <div>
-          <Label htmlFor="clubLocation">Club Location (Optional)</Label>
-          <Input
-            id="clubLocation"
-            placeholder="Al Quoz Industrial Area 2 - Dubai"
-            {...form.register("clubLocation")}
-            data-testid="input-club-location"
-          />
-        </div>
-
-        {/* Partner */}
-        <div>
-          <Label htmlFor="partner">Partner (Optional)</Label>
-          <Input
-            id="partner"
-            placeholder="Partner name"
-            {...form.register("partner")}
-            data-testid="input-partner"
-          />
-        </div>
-
-        {/* Opponents */}
-        <div>
-          <Label htmlFor="opponents">Opponents (Optional)</Label>
-          <Input
-            id="opponents"
-            placeholder="Opponent names"
-            {...form.register("opponents")}
-            data-testid="input-opponents"
-          />
-        </div>
-
-        {/* Session Rating */}
-        <div>
-          <Label>Session Rating</Label>
-          <div className="flex space-x-2 mt-2">
-            {[1, 2, 3, 4, 5].map(rating => (
-              <Button
-                key={rating}
-                type="button"
-                variant={sessionRating >= rating ? "default" : "outline"}
-                size="icon"
-                className={`w-12 h-12 ${
-                  sessionRating >= rating 
-                    ? 'bg-yellow-400 border-yellow-400 text-white hover:bg-yellow-500' 
-                    : 'border-gray-200 dark:border-gray-600 text-gray-400 hover:border-yellow-400 hover:text-yellow-400'
-                }`}
-                onClick={() => setSessionRating(rating)}
-                data-testid={`rating-${rating}`}
-              >
-                ⭐
-              </Button>
-            ))}
-          </div>
-        </div>
-
-        {/* Notes */}
-        <div>
-          <Label htmlFor="notes">Notes (Optional)</Label>
-          <Textarea
-            id="notes"
-            placeholder="Add any notes about your session..."
-            rows={3}
-            className="resize-none"
-            {...form.register("notes")}
-            data-testid="textarea-notes"
-          />
-        </div>
-
-        {/* Submit Button */}
-        <Button
-          type="submit"
-          className="w-full bg-primary text-white hover:bg-blue-700 transition-colors mt-6"
-          disabled={createActivityMutation.isPending}
-          data-testid="button-submit-activity"
-        >
-          {createActivityMutation.isPending ? "Adding..." : "Add Activity"}
-        </Button>
-      </form>
+            {createActivityMutation.isPending ? "Adding..." : "Add Activity"}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 }
