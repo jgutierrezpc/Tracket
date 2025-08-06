@@ -114,33 +114,34 @@ export default function CourtsMap({
          setMapLoaded(true);
          setIsMapInitializing(false);
 
-         // Get user location if available
-         if (navigator.geolocation) {
-           setIsLoadingLocation(true);
-           setLocationError(null);
-           navigator.geolocation.getCurrentPosition(
-             (position) => {
-               const userPos = {
-                 lat: position.coords.latitude,
-                 lng: position.coords.longitude
-               };
-               setUserLocation(userPos);
-               setIsLoadingLocation(false);
-               
-               // Center map on user location if no courts with coordinates
-               const courtsWithCoords = courts.filter(court => court.coordinates);
-               if (courtsWithCoords.length === 0) {
-                 map.setCenter(userPos);
-                 map.setZoom(12);
-               }
-             },
-             (error) => {
-               console.warn("Could not get user location:", error);
-               setIsLoadingLocation(false);
-               setLocationError("Could not get your location. Please check your browser permissions.");
-             }
-           );
-         }
+                   // Get user location if available
+          if (navigator.geolocation) {
+            setIsLoadingLocation(true);
+            setLocationError(null);
+            navigator.geolocation.getCurrentPosition(
+              (position) => {
+                const userPos = {
+                  lat: position.coords.latitude,
+                  lng: position.coords.longitude
+                };
+                setUserLocation(userPos);
+                setIsLoadingLocation(false);
+                
+                // Center map on user location if no courts with coordinates
+                const courtsWithCoords = courts.filter(court => court.coordinates);
+                if (courtsWithCoords.length === 0) {
+                  map.setCenter(userPos);
+                  map.setZoom(12);
+                }
+              },
+              (error) => {
+                console.warn("Could not get user location:", error);
+                setIsLoadingLocation(false);
+                // Don't show error for location - just continue without user location
+                // setLocationError("Could not get your location. Please check your browser permissions.");
+              }
+            );
+          }
        } catch (err) {
          setMapError("Failed to initialize map");
          setIsMapInitializing(false);
@@ -152,7 +153,7 @@ export default function CourtsMap({
      if (!window.google) {
        setIsMapInitializing(true);
        const script = document.createElement("script");
-       script.src = `https://maps.googleapis.com/maps/api/js?key=${process.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}&libraries=places`;
+       script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}&libraries=places`;
        script.async = true;
        script.defer = true;
        script.onload = initMap;
@@ -398,16 +399,7 @@ export default function CourtsMap({
      );
    }
 
-   if (locationError) {
-     return (
-       <Alert variant="secondary" className={className}>
-         <AlertCircle className="h-4 w-4" />
-         <AlertDescription>
-           {locationError}
-         </AlertDescription>
-       </Alert>
-     );
-   }
+   
 
   const courtsWithCoordinates = courts.filter(court => court.coordinates);
 
@@ -423,7 +415,6 @@ export default function CourtsMap({
                        {/* Map Controls Overlay */}
                <div className="absolute top-4 right-4 space-y-2">
                  <Button
-                   variant="secondary"
                    size="sm"
                    onClick={handleGoToUserLocation}
                    disabled={!userLocation || isLoadingLocation}
@@ -441,7 +432,6 @@ export default function CourtsMap({
                  {isMobile && (
                    <div className="flex flex-col gap-1">
                      <Button
-                       variant="secondary"
                        size="sm"
                        onClick={handleZoomIn}
                        className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
@@ -449,7 +439,6 @@ export default function CourtsMap({
                        <ZoomIn className="h-4 w-4" />
                      </Button>
                      <Button
-                       variant="secondary"
                        size="sm"
                        onClick={handleZoomOut}
                        className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
@@ -457,7 +446,6 @@ export default function CourtsMap({
                        <ZoomOut className="h-4 w-4" />
                      </Button>
                      <Button
-                       variant="secondary"
                        size="sm"
                        onClick={handleResetView}
                        className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
@@ -472,7 +460,6 @@ export default function CourtsMap({
                  {!isMobile && (
                    <div className="flex flex-col gap-1">
                      <Button
-                       variant="secondary"
                        size="sm"
                        onClick={handleZoomIn}
                        className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
@@ -481,7 +468,6 @@ export default function CourtsMap({
                        <ZoomIn className="h-4 w-4" />
                      </Button>
                      <Button
-                       variant="secondary"
                        size="sm"
                        onClick={handleZoomOut}
                        className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
@@ -490,7 +476,6 @@ export default function CourtsMap({
                        <ZoomOut className="h-4 w-4" />
                      </Button>
                      <Button
-                       variant="secondary"
                        size="sm"
                        onClick={handleResetView}
                        className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
@@ -499,7 +484,6 @@ export default function CourtsMap({
                        <RotateCcw className="h-4 w-4" />
                      </Button>
                      <Button
-                       variant="secondary"
                        size="sm"
                        onClick={handlePanToCenter}
                        className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
@@ -523,17 +507,17 @@ export default function CourtsMap({
            </div>
          )}
 
-         {/* Partial coordinates warning */}
-         {courts.length > 0 && courtsWithCoordinates.length > 0 && courtsWithCoordinates.length < courts.length && (
-           <div className="absolute bottom-4 left-4 right-4">
-             <Alert variant="secondary">
-               <Info className="h-4 w-4" />
-               <AlertDescription>
-                 {courts.length - courtsWithCoordinates.length} court{courts.length - courtsWithCoordinates.length === 1 ? '' : 's'} without location data
-               </AlertDescription>
-             </Alert>
-           </div>
-         )}
+                   {/* Partial coordinates warning */}
+          {courts.length > 0 && courtsWithCoordinates.length > 0 && courtsWithCoordinates.length < courts.length && (
+            <div className="absolute bottom-4 left-4 right-4">
+              <Alert>
+                <Info className="h-4 w-4" />
+                <AlertDescription>
+                  {courts.length - courtsWithCoordinates.length} court{courts.length - courtsWithCoordinates.length === 1 ? '' : 's'} without location data
+                </AlertDescription>
+              </Alert>
+            </div>
+          )}
       </div>
 
                    {/* Selected Court Details */}

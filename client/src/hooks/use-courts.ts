@@ -42,6 +42,9 @@ interface UseCourtsReturn {
   setFilters: (filters: CourtFilters) => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
+  availableSports: string[];
+  availableActivityTypes: string[];
+  availablePlayers: string[];
   
   // Favorites
   toggleFavorite: (clubName: string, clubLocation: string) => void;
@@ -198,6 +201,40 @@ export function useCourts(options: UseCourtsOptions = {}): UseCourtsReturn {
   const filteredCourts = useMemo(() => {
     let filtered = [...courts];
 
+    // Apply client-side filters
+    if (filters.sport) {
+      filtered = filtered.filter(court => 
+        court.sports.includes(filters.sport!)
+      );
+    }
+
+    if (filters.activityType) {
+      filtered = filtered.filter(court => 
+        court.activityTypes.includes(filters.activityType!)
+      );
+    }
+
+    if (filters.player) {
+      filtered = filtered.filter(court => 
+        court.players.some(player => 
+          player.toLowerCase().includes(filters.player!.toLowerCase())
+        )
+      );
+    }
+
+    // Apply date range filters
+    if (filters.startDate || filters.endDate) {
+      filtered = filtered.filter(court => {
+        const lastPlayedDate = new Date(court.lastPlayed);
+        const startDate = filters.startDate ? new Date(filters.startDate) : null;
+        const endDate = filters.endDate ? new Date(filters.endDate) : null;
+        
+        if (startDate && lastPlayedDate < startDate) return false;
+        if (endDate && lastPlayedDate > endDate) return false;
+        return true;
+      });
+    }
+
     // Apply favorites filter
     if (showOnlyFavorites && enableFavorites) {
       filtered = filtered.filter(court => 
@@ -206,13 +243,31 @@ export function useCourts(options: UseCourtsOptions = {}): UseCourtsReturn {
     }
 
     return filtered;
-  }, [courts, showOnlyFavorites, enableFavorites, isLocalFavorite]);
+  }, [courts, filters, showOnlyFavorites, enableFavorites, isLocalFavorite]);
 
-  // Compute statistics
+  // Compute statistics and available options
   const totalCourts = courts.length;
   const totalFavorites = favorites.length;
   const courtsWithCoordinates = courts.filter(court => court.coordinates).length;
-  const hasActiveFilters = Object.values(filters).some(value => value !== undefined);
+  const hasActiveFilters = Object.values(filters).some(value => 
+    value !== undefined && value !== '' && value !== null
+  );
+
+  // Compute available options for filters
+  const availableSports = useMemo(() => 
+    Array.from(new Set(courts.flatMap(court => court.sports))).sort(),
+    [courts]
+  );
+
+  const availableActivityTypes = useMemo(() => 
+    Array.from(new Set(courts.flatMap(court => court.activityTypes))).sort(),
+    [courts]
+  );
+
+  const availablePlayers = useMemo(() => 
+    Array.from(new Set(courts.flatMap(court => court.players))).sort(),
+    [courts]
+  );
 
   // Handlers
   const handleSetFilters = useCallback((newFilters: CourtFilters) => {
@@ -314,6 +369,11 @@ export function useCourts(options: UseCourtsOptions = {}): UseCourtsReturn {
     setFilters: handleSetFilters,
     clearFilters,
     hasActiveFilters,
+    
+    // Available options for filters
+    availableSports,
+    availableActivityTypes,
+    availablePlayers,
     
     // Favorites
     toggleFavorite: handleToggleFavorite,

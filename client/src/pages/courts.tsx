@@ -44,6 +44,9 @@ export default function Courts() {
     setFilters,
     clearFilters,
     hasActiveFilters,
+    availableSports,
+    availableActivityTypes,
+    availablePlayers,
     
     // Favorites
     toggleFavorite,
@@ -95,21 +98,7 @@ export default function Courts() {
     setCurrentView(view);
   }, [setCurrentView]);
 
-  // Memoize available options to prevent unnecessary re-renders
-  const availableSports = useMemo(() => 
-    Array.from(new Set(courts.flatMap(court => court.sports))).sort(),
-    [courts]
-  );
 
-  const availableActivityTypes = useMemo(() => 
-    Array.from(new Set(courts.flatMap(court => court.activityTypes))).sort(),
-    [courts]
-  );
-
-  const availablePlayers = useMemo(() => 
-    Array.from(new Set(courts.flatMap(court => court.players))).sort(),
-    [courts]
-  );
 
   // Memoize expensive computations
   const shouldShowEmptyState = useMemo(() => 
