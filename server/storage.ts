@@ -14,15 +14,41 @@ export interface IStorage {
   deleteActivity(id: string): Promise<boolean>;
   getActivitiesBySport(sport: string): Promise<Activity[]>;
   getActivitiesByDateRange(startDate: string, endDate: string): Promise<Activity[]>;
+  
+  // Courts methods
+  getCourtsData(filters?: {
+    startDate?: string;
+    endDate?: string;
+    sport?: string;
+    activityType?: string;
+    player?: string;
+  }): Promise<Array<{
+    clubName: string;
+    clubLocation: string;
+    playCount: number;
+    totalDuration: number;
+    lastPlayed: string;
+    sports: string[];
+    activityTypes: string[];
+    players: string[];
+  }>>;
+  
+  // Favorites methods
+  getFavorites(): Promise<string[]>;
+  addFavorite(clubName: string, clubLocation: string): Promise<void>;
+  removeFavorite(clubName: string, clubLocation: string): Promise<void>;
+  isFavorite(clubName: string, clubLocation: string): Promise<boolean>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private activities: Map<string, Activity>;
+  private favorites: Set<string>;
 
   constructor() {
     this.users = new Map();
     this.activities = new Map();
+    this.favorites = new Set();
   }
 
   async getUser(id: string): Promise<User | undefined> {
@@ -106,6 +132,150 @@ export class MemStorage implements IStorage {
         return activityDate >= start && activityDate <= end;
       })
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  }
+
+  async getCourtsData(filters?: {
+    startDate?: string;
+    endDate?: string;
+    sport?: string;
+    activityType?: string;
+    player?: string;
+  }): Promise<Array<{
+    clubName: string;
+    clubLocation: string;
+    playCount: number;
+    totalDuration: number;
+    lastPlayed: string;
+    sports: string[];
+    activityTypes: string[];
+    players: string[];
+  }>> {
+    let activities = Array.from(this.activities.values());
+
+    // Apply filters
+    if (filters) {
+      // Date range filter
+      if (filters.startDate && filters.endDate) {
+        const start = new Date(filters.startDate);
+        const end = new Date(filters.endDate);
+        activities = activities.filter(activity => {
+          const activityDate = new Date(activity.date);
+          return activityDate >= start && activityDate <= end;
+        });
+      }
+
+      // Sport filter
+      if (filters.sport) {
+        activities = activities.filter(activity => 
+          activity.sport.toLowerCase() === filters.sport!.toLowerCase()
+        );
+      }
+
+      // Activity type filter
+      if (filters.activityType) {
+        activities = activities.filter(activity => 
+          activity.activityType === filters.activityType
+        );
+      }
+
+      // Player filter
+      if (filters.player) {
+        activities = activities.filter(activity => {
+          const playerLower = filters.player!.toLowerCase();
+          return (
+            (activity.partner && activity.partner.toLowerCase().includes(playerLower)) ||
+            (activity.opponents && activity.opponents.toLowerCase().includes(playerLower))
+          );
+        });
+      }
+    }
+    
+    // Group activities by club
+    const courtsMap = new Map<string, {
+      clubName: string;
+      clubLocation: string;
+      activities: Activity[];
+    }>();
+
+    activities.forEach(activity => {
+      if (!activity.clubName) return; // Skip activities without club info
+      
+      const key = `${activity.clubName}|${activity.clubLocation || ''}`;
+      
+      if (!courtsMap.has(key)) {
+        courtsMap.set(key, {
+          clubName: activity.clubName,
+          clubLocation: activity.clubLocation || '',
+          activities: []
+        });
+      }
+      
+      courtsMap.get(key)!.activities.push(activity);
+    });
+
+    // Convert to array and calculate aggregated data
+    return Array.from(courtsMap.values()).map(court => {
+      const sortedActivities = court.activities.sort(
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+      );
+
+      const playCount = court.activities.length;
+      const totalDuration = court.activities.reduce((sum, activity) => sum + activity.duration, 0);
+      const lastPlayed = sortedActivities[0].date;
+      
+      // Collect unique sports
+      const sports = [...new Set(court.activities.map(a => a.sport))];
+      
+      // Collect unique activity types
+      const activityTypes = [...new Set(
+        court.activities
+          .map(a => a.activityType)
+          .filter(type => type !== null)
+      )];
+      
+      // Collect unique players (partner and opponents)
+      const players = new Set<string>();
+      court.activities.forEach(activity => {
+        if (activity.partner) players.add(activity.partner);
+        if (activity.opponents) {
+          activity.opponents.split(',').forEach(player => {
+            const trimmed = player.trim();
+            if (trimmed) players.add(trimmed);
+          });
+        }
+      });
+
+      return {
+        clubName: court.clubName,
+        clubLocation: court.clubLocation,
+        playCount,
+        totalDuration,
+        lastPlayed,
+        sports,
+        activityTypes,
+        players: Array.from(players)
+      };
+    }).sort((a, b) => b.playCount - a.playCount); // Sort by play frequency (most to least)
+  }
+
+  // Favorites methods
+  async getFavorites(): Promise<string[]> {
+    return Array.from(this.favorites);
+  }
+
+  async addFavorite(clubName: string, clubLocation: string): Promise<void> {
+    const key = `${clubName}|${clubLocation}`;
+    this.favorites.add(key);
+  }
+
+  async removeFavorite(clubName: string, clubLocation: string): Promise<void> {
+    const key = `${clubName}|${clubLocation}`;
+    this.favorites.delete(key);
+  }
+
+  async isFavorite(clubName: string, clubLocation: string): Promise<boolean> {
+    const key = `${clubName}|${clubLocation}`;
+    return this.favorites.has(key);
   }
 }
 

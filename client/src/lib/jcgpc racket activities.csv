@@ -1,76 +1,4 @@
-import { InsertActivity } from "@shared/schema";
-
-export interface CsvRow {
-  date: string;
-  sport: string;
-  'activity type': string;
-  'duration minutes': string;
-  'club name': string;
-  'club location': string;
-  'club map link': string;
-  'session rating': string;
-  racket: string;
-  partner: string;
-  oponents: string; // Note: CSV has typo "oponents" instead of "opponents"
-  notes: string;
-}
-
-export function parseCsvText(csvText: string): CsvRow[] {
-  const lines = csvText.trim().split('\n');
-  const headers = lines[0].split(',').map(h => h.trim());
-  
-  return lines.slice(1).map(line => {
-    const values = parseCSVLine(line);
-    const row: any = {};
-    
-    headers.forEach((header, index) => {
-      row[header] = values[index] || '';
-    });
-    
-    return row as CsvRow;
-  });
-}
-
-function parseCSVLine(line: string): string[] {
-  const result = [];
-  let current = '';
-  let inQuotes = false;
-  
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === ',' && !inQuotes) {
-      result.push(current.trim());
-      current = '';
-    } else {
-      current += char;
-    }
-  }
-  
-  result.push(current.trim());
-  return result;
-}
-
-export function csvRowToActivity(row: CsvRow): InsertActivity {
-  return {
-    date: row.date,
-    sport: row.sport.toLowerCase(),
-    activityType: row['activity type'] || null,
-    duration: parseInt(row['duration minutes']) || 0,
-    clubName: row['club name'] || null,
-    clubLocation: row['club location'] || null,
-    clubMapLink: row['club map link'] || null,
-    sessionRating: row['session rating'] ? parseInt(row['session rating']) : null,
-    racket: row.racket || null,
-    partner: row.partner || null,
-    opponents: row.oponents || null, // Handle the typo in CSV
-    notes: row.notes || null,
-  };
-}
-
-export const CSV_DATA = `date,sport,activity type,duration minutes,club name,club location,club map link,session rating,racket,partner,oponents,notes
+date,sport,activity type,duration minutes,club name,club location,club map link,session rating,racket,partner,oponents,notes
 2025-07-26,padel,friendly,90,Padel Town,"Mag warehouses, Plot 911 - Al Quoz Industrial Area 2 - Dubai",https://maps.app.goo.gl/UCJaZnernuPw3NSj8,3,Wilson Bela Elite V2.5,Rami,"Ricardo, Tomas",
 2025-07-19,padel,tournament,210,Padel Pro Al Quoz,Al Quoz - Al Quoz Industrial Area 2 - Dubai,https://maps.app.goo.gl/fBZJxcYssLYKn9Ft8,2,Wilson Bela Elite V2.5,Rami,Various,
 2025-07-17,padel,friendly,60,Match Point Padel,ABA AVENUE - 93 24B Street - Al Quoz - Al Quoz Industrial Area 2 - Dubai,https://maps.app.goo.gl/UurvvaUXD4jwuepM9,4,Wilson Bela Elite V2.5,Simon,"Miguel, Daniel",
@@ -155,4 +83,4 @@ export const CSV_DATA = `date,sport,activity type,duration minutes,club name,clu
 2022-05-30,tennis,,77,,,,,Babolat Pure Strike,,,
 2022-05-27,tennis,,52,,,,,Babolat Pure Strike,,,
 2022-05-23,tennis,,44,,,,,Babolat Pure Strike,,,
-2022-05-20,tennis,,43,,,,,Babolat Pure Strike,,,`;
+2022-05-20,tennis,,43,,,,,Babolat Pure Strike,,,

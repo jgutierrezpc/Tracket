@@ -44,6 +44,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const validatedData = insertActivitySchema.parse(req.body);
       const activity = await storage.createActivity(validatedData);
+      
+      // Note: Courts data is automatically updated since it's calculated from activities
+      // For database implementations, add cache invalidation here
+      
       res.status(201).json(activity);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -61,6 +65,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!activity) {
         return res.status(404).json({ message: "Activity not found" });
       }
+      
+      // Note: Courts data is automatically updated since it's calculated from activities
+      // For database implementations, add cache invalidation here
+      
       res.json(activity);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -77,6 +85,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!deleted) {
         return res.status(404).json({ message: "Activity not found" });
       }
+      
+      // Note: Courts data is automatically updated since it's calculated from activities
+      // For database implementations, add cache invalidation here
+      
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete activity" });
@@ -140,6 +152,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
 
+      // Note: Courts data is automatically updated since it's calculated from activities
+      // For database implementations, add cache invalidation here
+
       res.json({ 
         message: `Imported ${importedActivities.length} activities`,
         imported: importedActivities.length,
@@ -147,6 +162,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error) {
       res.status(500).json({ message: "Failed to import CSV data" });
+    }
+  });
+
+  // Get courts data
+  app.get("/api/courts", async (req, res) => {
+    try {
+      const { 
+        startDate, 
+        endDate, 
+        sport, 
+        activityType, 
+        player 
+      } = req.query;
+
+      const courtsData = await storage.getCourtsData({
+        startDate: startDate as string,
+        endDate: endDate as string,
+        sport: sport as string,
+        activityType: activityType as string,
+        player: player as string
+      });
+      
+      res.json(courtsData);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch courts data" });
+    }
+  });
+
+  // Get favorites
+  app.get("/api/courts/favorites", async (req, res) => {
+    try {
+      const favorites = await storage.getFavorites();
+      res.json(favorites);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch favorites" });
+    }
+  });
+
+  // Add favorite
+  app.post("/api/courts/favorites", async (req, res) => {
+    try {
+      const { clubName, clubLocation } = req.body;
+      if (!clubName) {
+        return res.status(400).json({ message: "Club name is required" });
+      }
+      
+      await storage.addFavorite(clubName, clubLocation || "");
+      res.status(201).json({ message: "Favorite added successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to add favorite" });
+    }
+  });
+
+  // Remove favorite
+  app.delete("/api/courts/favorites", async (req, res) => {
+    try {
+      const { clubName, clubLocation } = req.body;
+      if (!clubName) {
+        return res.status(400).json({ message: "Club name is required" });
+      }
+      
+      await storage.removeFavorite(clubName, clubLocation || "");
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to remove favorite" });
+    }
+  });
+
+  // Check if favorite
+  app.get("/api/courts/favorites/check", async (req, res) => {
+    try {
+      const { clubName, clubLocation } = req.query;
+      if (!clubName || typeof clubName !== 'string') {
+        return res.status(400).json({ message: "Club name is required" });
+      }
+      
+      const isFavorite = await storage.isFavorite(clubName, (clubLocation as string) || "");
+      res.json({ isFavorite });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check favorite status" });
     }
   });
 

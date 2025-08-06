@@ -1,8 +1,8 @@
+import React, { useState } from "react";
 import { House, MapPin, Plus, UserPlus, FileChartColumn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import AddActivityForm from "./add-activity-form";
-import { useState } from "react";
 import { useNavigation } from "@/hooks/use-navigation";
 
 interface BottomNavigationProps {
