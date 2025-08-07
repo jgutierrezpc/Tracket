@@ -195,7 +195,7 @@ export function useCourts(options: UseCourtsOptions = {}): UseCourtsReturn {
     if (enableFavorites) {
       syncWithBackend();
     }
-  }, [enableFavorites, syncWithBackend]);
+  }, [enableFavorites]); // Remove syncWithBackend dependency to prevent infinite calls
 
   // Filter courts based on current state
   const filteredCourts = useMemo(() => {
@@ -307,17 +307,18 @@ export function useCourts(options: UseCourtsOptions = {}): UseCourtsReturn {
     }
   }, [refetch]);
 
-  // Real-time updates (polling)
+  // Real-time updates (polling) - disabled for now to prevent excessive requests
   useEffect(() => {
     if (!enableRealTimeUpdates) return;
 
-    const interval = setInterval(() => {
-      setIsRefreshing(true);
-      queryClient.invalidateQueries({ queryKey: ['courts'] });
-      setTimeout(() => setIsRefreshing(false), 1000); // Show refreshing state for 1 second
-    }, realTimeInterval);
+    // Disabled polling to prevent excessive requests
+    // const interval = setInterval(() => {
+    //   setIsRefreshing(true);
+    //   queryClient.invalidateQueries({ queryKey: ['courts'] });
+    //   setTimeout(() => setIsRefreshing(false), 1000); // Show refreshing state for 1 second
+    // }, realTimeInterval);
 
-    return () => clearInterval(interval);
+    // return () => clearInterval(interval);
   }, [enableRealTimeUpdates, queryClient, realTimeInterval]);
 
   // Listen for activity changes and invalidate courts cache

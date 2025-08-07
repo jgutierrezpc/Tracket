@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { X } from "lucide-react";
 import { z } from "zod";
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { PlacesAutocomplete, type PlaceDetails } from "@/components/ui/places-autocomplete";
 
 const formSchema = insertActivitySchema.extend({
   date: z.string().min(1, "Date is required"),
@@ -27,6 +28,7 @@ interface AddActivityFormProps {
 export default function AddActivityForm({ onClose }: AddActivityFormProps) {
   const [selectedSport, setSelectedSport] = useState<string>("padel");
   const [sessionRating, setSessionRating] = useState<number>(0);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null);
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -71,13 +73,25 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
     },
   });
 
+  const handlePlaceSelect = (place: PlaceDetails) => {
+    console.log('Form handlePlaceSelect called with:', place);
+    setSelectedPlace(place);
+    form.setValue("clubName", place.name);
+    form.setValue("clubLocation", place.formatted_address);
+    form.setValue("clubLatitude", place.geometry.location.lat.toString());
+    form.setValue("clubLongitude", place.geometry.location.lng.toString());
+    console.log('Form values updated - clubName:', place.name);
+  };
+
   const onSubmit = (data: FormData) => {
     const activityData: InsertActivity = {
       ...data,
       sport: selectedSport,
       sessionRating: sessionRating > 0 ? sessionRating : null,
-      clubName: data.clubName || null,
-      clubLocation: data.clubLocation || null,
+      clubName: selectedPlace?.name || data.clubName || null,
+      clubLocation: selectedPlace?.formatted_address || data.clubLocation || null,
+      clubLatitude: selectedPlace?.geometry.location.lat.toString() || data.clubLatitude || null,
+      clubLongitude: selectedPlace?.geometry.location.lng.toString() || data.clubLongitude || null,
       clubMapLink: data.clubMapLink || null,
       racket: data.racket || null,
       partner: data.partner || null,
@@ -200,26 +214,26 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
             />
           </div>
 
-          {/* Club Name */}
+          {/* Club/Venue Search */}
           <div>
-            <Label htmlFor="clubName">Club Name (Optional)</Label>
-            <Input
-              id="clubName"
-              placeholder="Padel Town"
-              {...form.register("clubName")}
-              data-testid="input-club-name"
+            <Label htmlFor="clubName">Club/Venue (Optional)</Label>
+            <PlacesAutocomplete
+              onPlaceSelect={handlePlaceSelect}
+              placeholder="Search for a venue..."
+              value={selectedPlace?.name || form.watch("clubName") || ""}
+              onChange={(value) => {
+                console.log('PlacesAutocomplete onChange called with:', value);
+                form.setValue("clubName", value);
+              }}
             />
-          </div>
-
-          {/* Club Location */}
-          <div>
-            <Label htmlFor="clubLocation">Club Location (Optional)</Label>
-            <Input
-              id="clubLocation"
-              placeholder="Al Quoz Industrial Area 2 - Dubai"
-              {...form.register("clubLocation")}
-              data-testid="input-club-location"
-            />
+            {selectedPlace && (
+              <div className="mt-2 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-md">
+                <div className="text-sm text-green-800 dark:text-green-200">
+                  <div className="font-medium">{selectedPlace.name}</div>
+                  <div className="text-xs mt-1">{selectedPlace.formatted_address}</div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Partner */}

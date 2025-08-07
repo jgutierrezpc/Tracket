@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback, lazy, Suspense } from "react";
+import React, { useState, useMemo, useCallback, Suspense } from "react";
 import BottomNavigation from "../components/bottom-navigation";
 import { useNavigation } from "@/hooks/use-navigation";
 import { useCourts } from "@/hooks/use-courts";
@@ -19,8 +19,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertCircle } from "lucide-react";
 
-// Lazy load the map component since it's heavy and not always needed
-const CourtsMap = lazy(() => import("@/components/courts/courts-map"));
+// Import the map component directly instead of lazy loading
+import CourtsMap from "@/components/courts/courts-map";
 
 export default function Courts() {
   const { getCurrentPage } = useNavigation();
@@ -111,10 +111,10 @@ export default function Courts() {
     [isLoading, isError, isOffline, currentView, filteredCourts.length]
   );
 
-  const shouldShowMap = useMemo(() => 
-    !isLoading && !isError && !isOffline && currentView === 'map',
-    [isLoading, isError, isOffline, currentView]
-  );
+  const shouldShowMap = useMemo(() => {
+    const shouldShow = !isLoading && !isError && !isOffline && currentView === 'map';
+    return shouldShow;
+  }, [isLoading, isError, isOffline, currentView]);
 
   return (
     <CourtsErrorBoundary
@@ -125,36 +125,13 @@ export default function Courts() {
         forceRefresh();
       }}
     >
-      <div className="min-h-screen flex flex-col bg-white dark:bg-gray-900">
+      <div className="min-h-screen flex flex-col max-w-md mx-auto bg-white dark:bg-gray-900 shadow-lg">
         {/* Header */}
-        <header className="bg-white dark:bg-gray-800 text-black dark:text-white p-4 sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700 shadow-sm">
-          <div className="max-w-md mx-auto md:max-w-2xl lg:max-w-4xl flex items-center justify-between">
+        <header className="bg-white text-black p-2 sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-center">
             <div className="flex items-center space-x-3">
-              <h1 className="text-lg font-medium md:text-xl">Courts</h1>
-              {totalCourts > 0 && (
-                <span className="text-sm text-gray-500 dark:text-gray-400">
-                  ({totalCourts})
-                </span>
-              )}
-              {isRefreshing && (
-                <div className="flex items-center gap-1 text-xs text-blue-600 dark:text-blue-400">
-                  <div className="w-2 h-2 bg-blue-600 dark:bg-blue-400 rounded-full animate-pulse"></div>
-                  <span>Live</span>
-                </div>
-              )}
+              <h1 className="text-lg font-medium space-x-3">Courts</h1>
             </div>
-            
-            {/* Refresh Button */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={forceRefresh}
-              disabled={isLoading || isRefreshing}
-              className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700"
-              title={lastUpdated ? `Last updated: ${lastUpdated.toLocaleTimeString()}` : 'Refresh data'}
-            >
-              <RefreshCw className={`h-4 w-4 ${isLoading || isRefreshing ? 'animate-spin' : ''}`} />
-            </Button>
           </div>
         </header>
 
@@ -248,7 +225,7 @@ export default function Courts() {
 
             {/* Map View */}
             {shouldShowMap && (
-              <div className="h-[calc(100vh-300px)] md:h-[calc(100vh-200px)] lg:h-[calc(100vh-150px)]">
+              <div className="h-[calc(100vh-300px)] md:h-[calc(100vh-200px)] lg:h-[calc(100vh-150px)] min-h-[400px]">
                 <Suspense fallback={<LoadingState message="Loading map..." />}>
                   <CourtsMap
                     courts={filteredCourts}
@@ -257,7 +234,7 @@ export default function Courts() {
                     onCourtClick={handleCourtClick}
                     isLoading={isLoading}
                     error={error}
-                    className="h-full"
+                    className="h-full w-full"
                   />
                 </Suspense>
               </div>

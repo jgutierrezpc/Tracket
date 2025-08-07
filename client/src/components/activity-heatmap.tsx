@@ -138,7 +138,7 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
   return (
     <section className="p-4">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-medium">Activity Calendar</h2>
+        <h2 className="text-medium font-medium">Activity Calendar</h2>
         <div className="flex items-center space-x-4">
           
           {/* Legend */}

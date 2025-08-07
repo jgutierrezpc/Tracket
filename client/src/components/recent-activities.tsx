@@ -12,7 +12,7 @@ export default function RecentActivities({ activities, isLoading, isOwnActivitie
   if (isLoading) {
     return (
       <section className="p-4">
-        <h2 className="text-lg font-medium mb-4">Recent Activities</h2>
+        <h2 className="text-medium font-medium mb-4">Recent Activities</h2>
         <div className="space-y-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 animate-pulse">
@@ -40,7 +40,7 @@ export default function RecentActivities({ activities, isLoading, isOwnActivitie
   if (activities.length === 0) {
     return (
       <section className="p-4">
-        <h2 className="text-lg font-medium mb-4">Recent Activities</h2>
+        <h2 className="text-medium font-medium mb-4">Recent Activities</h2>
         <div className="text-center py-8 text-gray-500 dark:text-gray-400">
           <div className="text-4xl mb-2">🎾</div>
           <p>No activities found</p>
@@ -54,7 +54,7 @@ export default function RecentActivities({ activities, isLoading, isOwnActivitie
 
   return (
     <section className="p-4">
-      <h2 className="text-lg font-medium mb-4">Recent Activities</h2>
+      <h2 className="text-medium font-medium mb-4">Recent Activities</h2>
       <div className="space-y-3">
         {activities.map((activity) => (
           <ActivityDetail

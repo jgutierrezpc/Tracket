@@ -118,7 +118,7 @@ export function useFavorites() {
       setError('Failed to sync favorites with server');
       console.error('Error syncing favorites:', err);
     }
-  }, [favorites]);
+  }, []); // Remove favorites dependency to prevent infinite re-renders
 
   return {
     favorites,

@@ -12,7 +12,7 @@ export default function StatsOverview({ stats }: StatsOverviewProps) {
   if (!stats) {
     return (
       <section className="p-4 bg-white dark:bg-gray-900">
-        <h2 className="text-lg font-medium mb-4">Activity Overview</h2>
+        <h2 className="text-medium font-medium mb-4">Activity Overview</h2>
         <div className="grid grid-cols-3 gap-3">
           {[...Array(3)].map((_, i) => (
             <div key={i} className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center animate-pulse">
@@ -27,7 +27,7 @@ export default function StatsOverview({ stats }: StatsOverviewProps) {
 
   return (
     <section className="p-4 bg-white dark:bg-gray-900">
-      <h2 className="text-lg font-medium mb-4">Activity Overview</h2>
+      <h2 className="text-medium font-medium mb-4">Activity Overview</h2>
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
           <div className="text-2xl font-bold text-primary" data-testid="stat-total-activities">

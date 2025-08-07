@@ -18,6 +18,8 @@ export const activities = pgTable("activities", {
   clubName: text("club_name"),
   clubLocation: text("club_location"),
   clubMapLink: text("club_map_link"),
+  clubLatitude: text("club_latitude"), // Latitude coordinate
+  clubLongitude: text("club_longitude"), // Longitude coordinate
   sessionRating: integer("session_rating"), // 1-5
   racket: text("racket"),
   partner: text("partner"),

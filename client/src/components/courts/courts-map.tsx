@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState, useCallback } from "react";
-import { MapPin, Loader2, AlertCircle, Info, ZoomIn, ZoomOut, Navigation, X, Move, RotateCcw } from "lucide-react";
+import { useEffect, useRef, useState, useCallback, useLayoutEffect } from "react";
+import { MapPin, Loader2, AlertCircle, Info, ZoomIn, ZoomOut, X, Move, RotateCcw } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,302 +47,572 @@ export default function CourtsMap({
   error = null,
   className = ""
 }: CourtsMapProps) {
-  const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const markersRef = useRef<any[]>([]);
-           const [mapLoaded, setMapLoaded] = useState(false);
-         const [mapError, setMapError] = useState<string | null>(null);
-         const [selectedCourt, setSelectedCourt] = useState<CourtData | null>(null);
-         const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-         const [isMobile, setIsMobile] = useState(false);
-         const [showMobileDetails, setShowMobileDetails] = useState(false);
-         const [mapBounds, setMapBounds] = useState<any>(null);
-         const [currentZoom, setCurrentZoom] = useState(10);
-         const [isMapInitializing, setIsMapInitializing] = useState(false);
-         const [isLoadingLocation, setIsLoadingLocation] = useState(false);
-         const [locationError, setLocationError] = useState<string | null>(null);
+  const [mapLoaded, setMapLoaded] = useState(false);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [selectedCourt, setSelectedCourt] = useState<CourtData | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [showMobileDetails, setShowMobileDetails] = useState(false);
+  const [mapBounds, setMapBounds] = useState<any>(null);
+  const [currentZoom, setCurrentZoom] = useState(10);
+  const [isMapInitializing, setIsMapInitializing] = useState(false);
+  const [isComponentMounted, setIsComponentMounted] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState<string>("");
+  const [loadingRetries, setLoadingRetries] = useState(0);
 
-           // Check if a court is favorited
-         const isFavorite = useCallback((clubName: string, clubLocation: string) => {
-           return favorites.includes(`${clubName}|${clubLocation}`);
-         }, [favorites]);
+  // Check if a court is favorited
+  const isFavorite = useCallback((clubName: string, clubLocation: string) => {
+    return favorites.includes(`${clubName}|${clubLocation}`);
+  }, [favorites]);
 
-         // Detect mobile device
-         useEffect(() => {
-           const checkMobile = () => {
-             setIsMobile(window.innerWidth < 768);
-           };
-           
-           checkMobile();
-           window.addEventListener('resize', checkMobile);
-           
-           return () => window.removeEventListener('resize', checkMobile);
-         }, []);
-
-  // Initialize Google Maps
+  // Detect mobile device
   useEffect(() => {
-    if (!mapRef.current || mapLoaded) return;
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-         const initMap = () => {
-       setIsMapInitializing(true);
-       try {
-         if (!window.google) {
-           setMapError("Google Maps failed to load");
-           setIsMapInitializing(false);
-           return;
-         }
+  // Mark component as mounted after render
+  useEffect(() => {
+    setIsComponentMounted(true);
+  }, []);
 
-        const map = new window.google.maps.Map(mapRef.current, {
-          center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
-          zoom: 10,
-          mapTypeId: window.google.maps.MapTypeId.ROADMAP,
-          mapTypeControl: true,
-          streetViewControl: false,
-          fullscreenControl: true,
-          zoomControl: true,
-          gestureHandling: "cooperative",
-          styles: [
-            {
-              featureType: "poi",
-              elementType: "labels",
-              stylers: [{ visibility: "off" }]
-            }
-          ]
+  // Use a stable ref callback that persists across re-renders
+  const mapRefCallback = useCallback((node: HTMLDivElement | null) => {
+    // Store the node in a stable way
+    if (node) {
+      console.log("Map container node received:", node);
+      
+      // Immediately force dimensions if they're zero
+      if (node.offsetWidth === 0 || node.offsetHeight === 0) {
+        console.log("Container has zero dimensions, forcing immediately...");
+        node.style.width = "100%";
+        node.style.height = "384px";
+        node.style.minHeight = "384px";
+        node.style.display = "block";
+        node.style.position = "relative";
+        node.style.overflow = "hidden";
+        node.style.backgroundColor = "#f3f4f6";
+        
+        // Force a reflow
+        node.offsetHeight;
+        
+        console.log("After immediate dimension forcing:", {
+          offsetWidth: node.offsetWidth,
+          offsetHeight: node.offsetHeight,
+          getBoundingClientRect: node.getBoundingClientRect()
+        });
+      } else {
+        console.log("Container already has dimensions:", {
+          offsetWidth: node.offsetWidth,
+          offsetHeight: node.offsetHeight
+        });
+      }
+      
+      // Start loading process
+      setLoadingMessage("Preparing map container...");
+      setIsMapInitializing(true);
+      
+      // If container already has dimensions, initialize immediately
+      if (node.offsetWidth > 0 && node.offsetHeight > 0) {
+        console.log("Container has dimensions, initializing immediately");
+        setLoadingMessage("Loading Google Maps...");
+        initializeMap(node);
+        return;
+      }
+      
+      // Function to check if container is ready
+      const checkContainerReady = () => {
+        const rect = node.getBoundingClientRect();
+        console.log("Checking container dimensions:", rect);
+        console.log("Container computed styles:", window.getComputedStyle(node));
+        console.log("Container offset dimensions:", {
+          offsetWidth: node.offsetWidth,
+          offsetHeight: node.offsetHeight,
+          clientWidth: node.clientWidth,
+          clientHeight: node.clientHeight
+        });
+        
+        // Use offsetWidth/offsetHeight instead of getBoundingClientRect
+        const isReady = node.offsetWidth > 0 && node.offsetHeight > 0;
+        console.log("checkContainerReady result:", isReady, "offsetWidth:", node.offsetWidth, "offsetHeight:", node.offsetHeight);
+        return isReady;
+      };
+
+      // Function to wait for container to be ready
+      const waitForContainer = (attempts = 0) => {
+        console.log(`waitForContainer called, attempt ${attempts}`);
+        
+        if (checkContainerReady()) {
+          console.log("Container is ready, initializing map");
+          setLoadingMessage("Loading Google Maps...");
+          initializeMap(node);
+          return;
+        }
+
+        console.log(`Container not ready on attempt ${attempts}, dimensions:`, {
+          offsetWidth: node.offsetWidth,
+          offsetHeight: node.offsetHeight,
+          getBoundingClientRect: node.getBoundingClientRect()
         });
 
-                 mapInstanceRef.current = map;
-         setMapLoaded(true);
-         setIsMapInitializing(false);
-
-                   // Get user location if available
-          if (navigator.geolocation) {
-            setIsLoadingLocation(true);
-            setLocationError(null);
-            navigator.geolocation.getCurrentPosition(
-              (position) => {
-                const userPos = {
-                  lat: position.coords.latitude,
-                  lng: position.coords.longitude
-                };
-                setUserLocation(userPos);
-                setIsLoadingLocation(false);
-                
-                // Center map on user location if no courts with coordinates
-                const courtsWithCoords = courts.filter(court => court.coordinates);
-                if (courtsWithCoords.length === 0) {
-                  map.setCenter(userPos);
-                  map.setZoom(12);
-                }
-              },
-              (error) => {
-                console.warn("Could not get user location:", error);
-                setIsLoadingLocation(false);
-                // Don't show error for location - just continue without user location
-                // setLocationError("Could not get your location. Please check your browser permissions.");
-              }
-            );
+        if (attempts >= 20) { // 2 seconds (20 * 100ms)
+          console.log("Container still not ready after 2 seconds, retrying...");
+          setLoadingRetries(prev => prev + 1);
+          setLoadingMessage("Retrying map initialization...");
+          
+          // Force container to have dimensions if it's stuck at zero
+          if (node.offsetWidth === 0 || node.offsetHeight === 0) {
+            console.log("Forcing container dimensions...");
+            node.style.width = "100%";
+            node.style.height = "384px";
+            node.style.minHeight = "384px";
+            node.style.display = "block";
+            node.style.position = "relative";
+            node.style.overflow = "hidden";
+            node.style.backgroundColor = "#f3f4f6";
+            
+            // Force a reflow
+            node.offsetHeight;
+            
+            console.log("After forcing dimensions:", {
+              offsetWidth: node.offsetWidth,
+              offsetHeight: node.offsetHeight,
+              getBoundingClientRect: node.getBoundingClientRect()
+            });
           }
-       } catch (err) {
-         setMapError("Failed to initialize map");
-         setIsMapInitializing(false);
-         console.error("Map initialization error:", err);
-       }
+          
+          // Force a small delay and try again
+          setTimeout(() => {
+            if (node && !mapLoaded) {
+              console.log("Retrying after forcing dimensions...");
+              waitForContainer(0); // Reset attempts
+            }
+          }, 500);
+          return;
+        }
+
+        // Add a maximum timeout to prevent infinite waiting
+        if (attempts >= 50) { // 5 seconds total
+          console.log("Container still not ready after 5 seconds, proceeding anyway...");
+          setLoadingMessage("Initializing map...");
+          initializeMap(node);
+          return;
+        }
+
+        setLoadingMessage(`Preparing map container... (${attempts + 1}/20)`);
+        setTimeout(() => waitForContainer(attempts + 1), 100);
+      };
+
+      // Start waiting for container to be ready
+      setTimeout(() => {
+        if (node && isComponentMounted && !mapLoaded) {
+          // If we get here, it means the immediate check didn't work, so try waiting
+          console.log("Immediate check didn't work, trying waitForContainer");
+          waitForContainer();
+        }
+      }, 50);
+    }
+  }, [isComponentMounted, mapLoaded]);
+
+  // Initialize Google Maps with a specific element
+  const initializeMap = (containerElement: HTMLDivElement) => {
+    if (mapLoaded) return;
+
+    console.log("initializeMap called with element:", containerElement);
+
+    // Function to initialize map
+    const initMap = () => {
+      console.log("initMap called, window.google:", !!window.google);
+      setMapError(null);
+      
+      try {
+        if (!containerElement) {
+          setMapError("Map container not found");
+          setIsMapInitializing(false);
+          setLoadingMessage("");
+          return;
+        }
+
+        if (!window.google) {
+          setMapError("Google Maps failed to load");
+          setIsMapInitializing(false);
+          setLoadingMessage("");
+          return;
+        }
+
+        setLoadingMessage("Initializing map...");
+        console.log("Creating Google Maps instance...");
+        
+        // Function to create the map instance
+        const createMapInstance = (containerElement: HTMLDivElement) => {
+          // Ensure the container has fixed dimensions that Google Maps can work with
+          containerElement.style.width = "100%";
+          containerElement.style.height = "384px";
+          containerElement.style.minHeight = "384px";
+          containerElement.style.display = "block";
+          containerElement.style.position = "relative";
+          containerElement.style.overflow = "hidden";
+          containerElement.style.backgroundColor = "#f3f4f6"; // Light gray to show it's there
+          
+          // Force a reflow to ensure styles are applied
+          containerElement.offsetHeight;
+          
+          console.log("Creating map with fixed dimensions:", {
+            offsetWidth: containerElement.offsetWidth,
+            offsetHeight: containerElement.offsetHeight,
+            getBoundingClientRect: containerElement.getBoundingClientRect()
+          });
+          
+          // Wait for container to have actual dimensions before creating map
+          const waitForDimensions = () => {
+            const rect = containerElement.getBoundingClientRect();
+            console.log("Checking dimensions:", rect);
+            
+            if (rect.width > 0 && rect.height > 0) {
+              console.log("Container has proper dimensions, creating map...");
+              
+              try {
+                const map = new window.google.maps.Map(containerElement, {
+                  center: { lat: 40.7128, lng: -74.0060 }, // Default to NYC
+                  zoom: 10,
+                  mapTypeId: window.google.maps.MapTypeId.ROADMAP,
+                  mapTypeControl: true,
+                  streetViewControl: false,
+                  fullscreenControl: true,
+                  zoomControl: true,
+                  gestureHandling: "cooperative",
+                  styles: [
+                    {
+                      featureType: "poi",
+                      elementType: "labels",
+                      stylers: [{ visibility: "off" }]
+                    }
+                  ]
+                });
+
+                console.log("Map created successfully");
+                mapInstanceRef.current = map;
+                
+                // Clear loading message immediately after map creation
+                setLoadingMessage("Map ready!");
+                setIsMapInitializing(false);
+                
+                // Force resize after a short delay
+                setTimeout(() => {
+                  if (mapInstanceRef.current) {
+                    console.log("Forcing map resize...");
+                    window.google.maps.event.trigger(mapInstanceRef.current, 'resize');
+                  }
+                }, 500);
+                
+                setMapLoaded(true);
+              } catch (err) {
+                console.error("Failed to create map:", err);
+                setMapError("Failed to create map - try refreshing the page");
+                setIsMapInitializing(false);
+                setLoadingMessage("");
+              }
+            } else {
+              console.log("Container still has zero dimensions, waiting...");
+              // Wait 100ms and try again
+              setTimeout(waitForDimensions, 100);
+            }
+          };
+          
+          // Start waiting for dimensions
+          waitForDimensions();
+        };
+        
+        // Ensure the container is fully ready before creating the map
+        const containerRect = containerElement.getBoundingClientRect();
+        console.log("Container dimensions:", containerRect);
+        
+        // If getBoundingClientRect returns zero dimensions, force a reflow and wait
+        if (containerRect.width === 0 || containerRect.height === 0) {
+          console.log("getBoundingClientRect returns zero dimensions, forcing reflow...");
+          
+          // Force the container to have proper dimensions
+          containerElement.style.width = "100%";
+          containerElement.style.height = "384px";
+          containerElement.style.minHeight = "384px";
+          containerElement.style.display = "block";
+          containerElement.style.position = "relative";
+          containerElement.style.overflow = "hidden";
+          containerElement.style.visibility = "visible";
+          containerElement.style.opacity = "1";
+          containerElement.style.zIndex = "1";
+          
+          // Force parent containers to be visible too
+          let parent = containerElement.parentElement;
+          while (parent) {
+            const parentStyle = window.getComputedStyle(parent);
+            if (parentStyle.display === 'none' || parentStyle.visibility === 'hidden') {
+              console.log("Found hidden parent, making visible:", parent);
+              parent.style.display = "block";
+              parent.style.visibility = "visible";
+            }
+            parent = parent.parentElement;
+          }
+          
+          // Force a reflow
+          containerElement.offsetHeight;
+          
+          // Wait a bit and check again
+          setTimeout(() => {
+            const newRect = containerElement.getBoundingClientRect();
+            console.log("After reflow, container dimensions:", newRect);
+            
+            if (newRect.width > 0 && newRect.height > 0) {
+              console.log("Container now has dimensions, creating map...");
+              createMapInstance(containerElement);
+            } else {
+              console.log("Container still has zero dimensions after reflow, proceeding anyway...");
+              createMapInstance(containerElement);
+            }
+          }, 100);
+        } else {
+          // Container has proper dimensions, create map immediately
+          createMapInstance(containerElement);
+        }
+      } catch (err) {
+        console.error("Map initialization error:", err);
+        setMapError("Failed to initialize map");
+        setIsMapInitializing(false);
+        setLoadingMessage("");
+      }
     };
 
-         // Load Google Maps script if not already loaded
-     if (!window.google) {
-       setIsMapInitializing(true);
-       const script = document.createElement("script");
-       script.src = `https://maps.googleapis.com/maps/api/js?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'YOUR_API_KEY'}&libraries=places`;
-       script.async = true;
-       script.defer = true;
-       script.onload = initMap;
-       script.onerror = () => {
-         setMapError("Failed to load Google Maps");
-         setIsMapInitializing(false);
-       };
-       document.head.appendChild(script);
-     } else {
-       initMap();
-     }
-
-    return () => {
-      // Cleanup markers
-      markersRef.current.forEach(marker => marker.setMap(null));
-      markersRef.current = [];
+    // Load Google Maps script if not already loaded
+    const loadGoogleMaps = () => {
+      console.log("loadGoogleMaps called, window.google:", !!window.google);
+      
+      if (!window.google) {
+        console.log("Loading Google Maps script...");
+        const script = document.createElement("script");
+        const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+        
+        if (!apiKey || apiKey === 'YOUR_API_KEY') {
+          setMapError("Google Maps API key not configured. Please set VITE_GOOGLE_MAPS_API_KEY in your .env file.");
+          setIsMapInitializing(false);
+          setLoadingMessage("");
+          return;
+        }
+        
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
+        script.async = true;
+        script.defer = true;
+        
+        script.onload = () => {
+          console.log("Google Maps script loaded successfully");
+          setLoadingMessage("Initializing map...");
+          // Add a small delay to ensure the API is fully initialized
+          setTimeout(() => {
+            console.log("Calling initMap after script load");
+            initMap();
+          }, 100);
+        };
+        
+        script.onerror = () => {
+          console.error("Failed to load Google Maps script");
+          setMapError("Failed to load Google Maps. Please check your API key.");
+          setIsMapInitializing(false);
+          setLoadingMessage("");
+        };
+        
+        document.head.appendChild(script);
+      } else {
+        console.log("Google Maps already loaded, calling initMap directly");
+        initMap();
+      }
     };
-  }, [mapLoaded]);
+
+    loadGoogleMaps();
+  };
 
   // Add markers when courts data changes
   useEffect(() => {
-    if (!mapInstanceRef.current || !mapLoaded) return;
+    if (!mapInstanceRef.current || !mapLoaded || !window.google) return;
 
     // Clear existing markers
-    markersRef.current.forEach(marker => marker.setMap(null));
+    markersRef.current.forEach(marker => {
+      if (marker && typeof marker.setMap === 'function') {
+        marker.setMap(null);
+      }
+    });
     markersRef.current = [];
 
-    // Add new markers
+    // Add new markers using regular Marker (removed AdvancedMarkerElement)
     courts.forEach((court) => {
       if (!court.coordinates) return;
 
-      const marker = new window.google.maps.Marker({
-        position: court.coordinates,
-        map: mapInstanceRef.current,
-        title: court.clubName,
-        icon: {
-          url: isFavorite(court.clubName, court.clubLocation)
-            ? "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
-              </svg>
-            `)
-            : "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF6B6B" stroke="#FF4757" stroke-width="2"/>
-              </svg>
-            `),
-          scaledSize: new window.google.maps.Size(24, 24),
-          anchor: new window.google.maps.Point(12, 12)
-        }
-      });
+      try {
+        // Use regular Marker instead of AdvancedMarkerElement
+        const marker = new window.google.maps.Marker({
+          position: court.coordinates,
+          map: mapInstanceRef.current,
+          title: court.clubName,
+          icon: {
+            url: isFavorite(court.clubName, court.clubLocation)
+              ? "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FFD700" stroke="#FFA500" stroke-width="2"/>
+                </svg>
+              `)
+              : "data:image/svg+xml;charset=UTF-8," + encodeURIComponent(`
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" fill="#FF6B6B" stroke="#FF4757" stroke-width="2"/>
+                </svg>
+              `),
+            scaledSize: new window.google.maps.Size(24, 24),
+            anchor: new window.google.maps.Point(12, 12)
+          }
+        });
 
-                   // Add click listener
-             marker.addListener("click", () => {
-               setSelectedCourt(court);
-               if (isMobile) {
-                 setShowMobileDetails(true);
-               }
-               if (onCourtClick) {
-                 onCourtClick(court);
-               }
-             });
+        // Add click listener
+        marker.addListener("click", () => {
+          setSelectedCourt(court);
+          if (isMobile) {
+            setShowMobileDetails(true);
+          }
+          if (onCourtClick) {
+            onCourtClick(court);
+          }
+        });
 
-      markersRef.current.push(marker);
+        markersRef.current.push(marker);
+      } catch (err) {
+        console.warn("Failed to create marker for court:", court.clubName, err);
+      }
     });
 
-             // Fit bounds if we have markers
-         if (markersRef.current.length > 0) {
-           const bounds = new window.google.maps.LatLngBounds();
-           markersRef.current.forEach(marker => {
-             bounds.extend(marker.getPosition());
-           });
-           mapInstanceRef.current.fitBounds(bounds);
-           
-           // Add some padding to bounds
-           const listener = window.google.maps.event.addListener(mapInstanceRef.current, "bounds_changed", () => {
-             window.google.maps.event.removeListener(listener);
-             const currentBounds = mapInstanceRef.current.getBounds();
-             if (currentBounds) {
-               const ne = currentBounds.getNorthEast();
-               const sw = currentBounds.getSouthWest();
-               const latDiff = (ne.lat() - sw.lat()) * 0.1;
-               const lngDiff = (ne.lng() - sw.lng()) * 0.1;
-               
-               const newBounds = new window.google.maps.LatLngBounds(
-                 new window.google.maps.LatLng(sw.lat() - latDiff, sw.lng() - lngDiff),
-                 new window.google.maps.LatLng(ne.lat() + latDiff, ne.lng() + lngDiff)
-               );
-               mapInstanceRef.current.fitBounds(newBounds);
-             }
-           });
-         } else if (courts.length > 0) {
-           // If we have courts but no coordinates, center on user location or default
-           const centerLocation = userLocation || { lat: 40.7128, lng: -74.0060 };
-           mapInstanceRef.current.setCenter(centerLocation);
-           mapInstanceRef.current.setZoom(10);
-         }
+    // Fit bounds if we have markers
+    if (markersRef.current.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      markersRef.current.forEach(marker => {
+        if (marker) {
+          const position = marker.getPosition();
+          if (position) {
+            bounds.extend(position);
+          }
+        }
+      });
+      mapInstanceRef.current.fitBounds(bounds);
+      
+      // Add some padding to bounds
+      const listener = window.google.maps.event.addListener(mapInstanceRef.current, "bounds_changed", () => {
+        window.google.maps.event.removeListener(listener);
+        const currentBounds = mapInstanceRef.current.getBounds();
+        if (currentBounds) {
+          const ne = currentBounds.getNorthEast();
+          const sw = currentBounds.getSouthWest();
+          const latDiff = (ne.lat() - sw.lat()) * 0.1;
+          const lngDiff = (ne.lng() - sw.lng()) * 0.1;
+          
+          const newBounds = new window.google.maps.LatLngBounds(
+            new window.google.maps.LatLng(sw.lat() - latDiff, sw.lng() - lngDiff),
+            new window.google.maps.LatLng(ne.lat() + latDiff, ne.lng() + lngDiff)
+          );
+          mapInstanceRef.current.fitBounds(newBounds);
+        }
+      });
+    } else if (courts.length > 0) {
+      // If we have courts but no coordinates, center on default location
+      mapInstanceRef.current.setCenter({ lat: 40.7128, lng: -74.0060 });
+      mapInstanceRef.current.setZoom(10);
+    }
   }, [courts, mapLoaded, isFavorite, onCourtClick]);
 
-           // Handle favorite toggle
-         const handleToggleFavorite = useCallback((court: CourtData) => {
-           onToggleFavorite(court.clubName, court.clubLocation);
-         }, [onToggleFavorite]);
+  // Handle favorite toggle
+  const handleToggleFavorite = useCallback((court: CourtData) => {
+    onToggleFavorite(court.clubName, court.clubLocation);
+  }, [onToggleFavorite]);
 
-         // Map control functions
-         const handleZoomIn = useCallback(() => {
-           if (mapInstanceRef.current) {
-             mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() + 1);
-           }
-         }, []);
+  // Map control functions
+  const handleZoomIn = useCallback(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() + 1);
+    }
+  }, []);
 
-         const handleZoomOut = useCallback(() => {
-           if (mapInstanceRef.current) {
-             mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() - 1);
-           }
-         }, []);
+  const handleZoomOut = useCallback(() => {
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.setZoom(mapInstanceRef.current.getZoom() - 1);
+    }
+  }, []);
 
-         const handleGoToUserLocation = useCallback(() => {
-           if (userLocation && mapInstanceRef.current) {
-             mapInstanceRef.current.setCenter(userLocation);
-             mapInstanceRef.current.setZoom(12);
-           }
-         }, [userLocation]);
+  const handleCloseMobileDetails = useCallback(() => {
+    setShowMobileDetails(false);
+    setSelectedCourt(null);
+  }, []);
 
-         const handleCloseMobileDetails = useCallback(() => {
-           setShowMobileDetails(false);
-           setSelectedCourt(null);
-         }, []);
+  // Enhanced map control functions
+  const handleResetView = useCallback(() => {
+    if (mapInstanceRef.current) {
+      if (markersRef.current.length > 0) {
+        // Fit bounds to all markers
+        const bounds = new window.google.maps.LatLngBounds();
+        markersRef.current.forEach(marker => {
+          if (marker) {
+            const position = marker.getPosition();
+            if (position) {
+              bounds.extend(position);
+            }
+          }
+        });
+        mapInstanceRef.current.fitBounds(bounds);
+      } else {
+        // Default view
+        mapInstanceRef.current.setCenter({ lat: 40.7128, lng: -74.0060 });
+        mapInstanceRef.current.setZoom(10);
+      }
+    }
+  }, []);
 
-         // Enhanced map control functions
-         const handleResetView = useCallback(() => {
-           if (mapInstanceRef.current) {
-             if (markersRef.current.length > 0) {
-               // Fit bounds to all markers
-               const bounds = new window.google.maps.LatLngBounds();
-               markersRef.current.forEach(marker => {
-                 bounds.extend(marker.getPosition());
-               });
-               mapInstanceRef.current.fitBounds(bounds);
-             } else if (userLocation) {
-               // Center on user location
-               mapInstanceRef.current.setCenter(userLocation);
-               mapInstanceRef.current.setZoom(12);
-             } else {
-               // Default view
-               mapInstanceRef.current.setCenter({ lat: 40.7128, lng: -74.0060 });
-               mapInstanceRef.current.setZoom(10);
-             }
-           }
-         }, [userLocation]);
+  const handlePanToCenter = useCallback(() => {
+    if (mapInstanceRef.current) {
+      const center = mapInstanceRef.current.getCenter();
+      if (center) {
+        mapInstanceRef.current.panTo(center);
+      }
+    }
+  }, []);
 
-         const handlePanToCenter = useCallback(() => {
-           if (mapInstanceRef.current) {
-             const center = mapInstanceRef.current.getCenter();
-             if (center) {
-               mapInstanceRef.current.panTo(center);
-             }
-           }
-         }, []);
+  // Map event listeners for zoom and bounds tracking
+  useEffect(() => {
+    if (!mapInstanceRef.current || !mapLoaded || !window.google) return;
 
-         // Map event listeners for zoom and bounds tracking
-         useEffect(() => {
-           if (!mapInstanceRef.current || !mapLoaded) return;
+    const zoomListener = window.google.maps.event.addListener(
+      mapInstanceRef.current,
+      'zoom_changed',
+      () => {
+        if (mapInstanceRef.current) {
+          setCurrentZoom(mapInstanceRef.current.getZoom());
+        }
+      }
+    );
 
-           const zoomListener = window.google.maps.event.addListener(
-             mapInstanceRef.current,
-             'zoom_changed',
-             () => {
-               if (mapInstanceRef.current) {
-                 setCurrentZoom(mapInstanceRef.current.getZoom());
-               }
-             }
-           );
+    const boundsListener = window.google.maps.event.addListener(
+      mapInstanceRef.current,
+      'bounds_changed',
+      () => {
+        if (mapInstanceRef.current) {
+          setMapBounds(mapInstanceRef.current.getBounds());
+        }
+      }
+    );
 
-           const boundsListener = window.google.maps.event.addListener(
-             mapInstanceRef.current,
-             'bounds_changed',
-             () => {
-               if (mapInstanceRef.current) {
-                 setMapBounds(mapInstanceRef.current.getBounds());
-               }
-             }
-           );
-
-           return () => {
-             window.google.maps.event.removeListener(zoomListener);
-             window.google.maps.event.removeListener(boundsListener);
-           };
-         }, [mapLoaded]);
+    return () => {
+      window.google.maps.event.removeListener(zoomListener);
+      window.google.maps.event.removeListener(boundsListener);
+    };
+  }, [mapLoaded]);
 
   // Format duration
   const formatDuration = (minutes: number) => {
@@ -366,16 +636,27 @@ export default function CourtsMap({
     return date.toLocaleDateString();
   };
 
-     if (isLoading || isMapInitializing) {
-     return (
-       <div className={`flex items-center justify-center h-64 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
-         <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-           <Loader2 className="h-5 w-5 animate-spin" />
-           <span>{isMapInitializing ? 'Initializing map...' : 'Loading map...'}</span>
-         </div>
-       </div>
-     );
-   }
+  const courtsWithCoordinates = courts.filter(court => court.coordinates);
+
+  if (isLoading || isMapInitializing) {
+    return (
+      <div className={`flex items-center justify-center h-64 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
+        <div className="flex flex-col items-center gap-3 text-gray-600 dark:text-gray-400">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <div className="text-center">
+            <div className="font-medium">
+              {loadingMessage || (isMapInitializing ? 'Initializing map...' : 'Loading map...')}
+            </div>
+            {loadingRetries > 0 && (
+              <div className="text-sm text-gray-500 mt-1">
+                Retry attempt {loadingRetries}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (error) {
     return (
@@ -388,326 +669,301 @@ export default function CourtsMap({
     );
   }
 
-     if (mapError) {
-     return (
-       <Alert variant="destructive" className={className}>
-         <AlertCircle className="h-4 w-4" />
-         <AlertDescription>
-           {mapError}
-         </AlertDescription>
-       </Alert>
-     );
-   }
-
-   
-
-  const courtsWithCoordinates = courts.filter(court => court.coordinates);
+  if (mapError) {
+    return (
+      <Alert variant="destructive" className={className}>
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          {mapError}
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className={`space-y-4 ${className}`}>
       {/* Map Container */}
       <div className="relative">
         <div
-          ref={mapRef}
+          ref={mapRefCallback}
           className="w-full h-96 rounded-lg border border-gray-200 dark:border-gray-700"
+          style={{ minHeight: '384px' }}
         />
         
-                       {/* Map Controls Overlay */}
-               <div className="absolute top-4 right-4 space-y-2">
-                 <Button
-                   size="sm"
-                   onClick={handleGoToUserLocation}
-                   disabled={!userLocation || isLoadingLocation}
-                   className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800"
-                 >
-                   {isLoadingLocation ? (
-                     <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                   ) : (
-                     <Navigation className="h-4 w-4 mr-1" />
-                   )}
-                   {isMobile ? '' : (isLoadingLocation ? 'Getting location...' : 'My Location')}
-                 </Button>
-                 
-                 {/* Mobile Zoom Controls */}
-                 {isMobile && (
-                   <div className="flex flex-col gap-1">
-                     <Button
-                       size="sm"
-                       onClick={handleZoomIn}
-                       className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
-                     >
-                       <ZoomIn className="h-4 w-4" />
-                     </Button>
-                     <Button
-                       size="sm"
-                       onClick={handleZoomOut}
-                       className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
-                     >
-                       <ZoomOut className="h-4 w-4" />
-                     </Button>
-                     <Button
-                       size="sm"
-                       onClick={handleResetView}
-                       className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
-                       title="Reset view"
-                     >
-                       <RotateCcw className="h-4 w-4" />
-                     </Button>
-                   </div>
-                 )}
-
-                 {/* Desktop Map Controls */}
-                 {!isMobile && (
-                   <div className="flex flex-col gap-1">
-                     <Button
-                       size="sm"
-                       onClick={handleZoomIn}
-                       className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
-                       title="Zoom in"
-                     >
-                       <ZoomIn className="h-4 w-4" />
-                     </Button>
-                     <Button
-                       size="sm"
-                       onClick={handleZoomOut}
-                       className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
-                       title="Zoom out"
-                     >
-                       <ZoomOut className="h-4 w-4" />
-                     </Button>
-                     <Button
-                       size="sm"
-                       onClick={handleResetView}
-                       className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
-                       title="Reset view"
-                     >
-                       <RotateCcw className="h-4 w-4" />
-                     </Button>
-                     <Button
-                       size="sm"
-                       onClick={handlePanToCenter}
-                       className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
-                       title="Center map"
-                     >
-                       <Move className="h-4 w-4" />
-                     </Button>
-                   </div>
-                 )}
-               </div>
-
-                 {/* Courts without coordinates warning */}
-         {courts.length > 0 && courtsWithCoordinates.length === 0 && (
-           <div className="absolute bottom-4 left-4 right-4">
-             <Alert>
-               <Info className="h-4 w-4" />
-               <AlertDescription>
-                 No courts with location data found. Add coordinates to see courts on the map.
-               </AlertDescription>
-             </Alert>
-           </div>
-         )}
-
-                   {/* Partial coordinates warning */}
-          {courts.length > 0 && courtsWithCoordinates.length > 0 && courtsWithCoordinates.length < courts.length && (
-            <div className="absolute bottom-4 left-4 right-4">
-              <Alert>
-                <Info className="h-4 w-4" />
-                <AlertDescription>
-                  {courts.length - courtsWithCoordinates.length} court{courts.length - courtsWithCoordinates.length === 1 ? '' : 's'} without location data
-                </AlertDescription>
-              </Alert>
+        {/* Map Controls Overlay */}
+        <div className="absolute top-4 right-4 space-y-2">
+          {/* Mobile Zoom Controls */}
+          {isMobile && (
+            <div className="flex flex-col gap-1">
+              <Button
+                size="sm"
+                onClick={handleZoomIn}
+                className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleZoomOut}
+                className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleResetView}
+                className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
+                title="Reset view"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
             </div>
           )}
+
+          {/* Desktop Map Controls */}
+          {!isMobile && (
+            <div className="flex flex-col gap-1">
+              <Button
+                size="sm"
+                onClick={handleZoomIn}
+                className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
+                title="Zoom in"
+              >
+                <ZoomIn className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleZoomOut}
+                className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
+                title="Zoom out"
+              >
+                <ZoomOut className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleResetView}
+                className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
+                title="Reset view"
+              >
+                <RotateCcw className="h-4 w-4" />
+              </Button>
+              <Button
+                size="sm"
+                onClick={handlePanToCenter}
+                className="bg-white/90 hover:bg-white dark:bg-gray-800/90 dark:hover:bg-gray-800 p-2"
+                title="Center map"
+              >
+                <Move className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Courts without coordinates warning */}
+        {courts.length > 0 && courtsWithCoordinates.length === 0 && (
+          <div className="absolute bottom-4 left-4 right-4">
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                No courts with location data found. Add coordinates to see courts on the map.
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
+
+        {/* Partial coordinates warning */}
+        {courts.length > 0 && courtsWithCoordinates.length > 0 && courtsWithCoordinates.length < courts.length && (
+          <div className="absolute bottom-4 left-4 right-4">
+            <Alert>
+              <Info className="h-4 w-4" />
+              <AlertDescription>
+                {courts.length - courtsWithCoordinates.length} court{courts.length - courtsWithCoordinates.length === 1 ? '' : 's'} without location data
+              </AlertDescription>
+            </Alert>
+          </div>
+        )}
       </div>
 
-                   {/* Selected Court Details */}
-             {selectedCourt && !isMobile && (
-               <Card>
-                 <CardHeader className="pb-3">
-                   <div className="flex items-start justify-between">
-                     <div className="flex-1 min-w-0">
-                       <CardTitle className="text-lg truncate">
-                         {selectedCourt.clubName}
-                       </CardTitle>
-                       <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                         {selectedCourt.clubLocation || "No location"}
-                       </p>
-                     </div>
-                     <Button
-                       variant="ghost"
-                       size="sm"
-                       className={`p-1 h-auto transition-colors ${
-                         isFavorite(selectedCourt.clubName, selectedCourt.clubLocation)
-                           ? 'text-yellow-500 hover:text-yellow-600'
-                           : 'text-gray-400 hover:text-yellow-500'
-                       }`}
-                       onClick={() => handleToggleFavorite(selectedCourt)}
-                     >
-                       <MapPin className="h-4 w-4" />
-                     </Button>
-                   </div>
-                 </CardHeader>
-                 <CardContent className="pt-0">
-                   <div className="space-y-3">
-                     <div className="flex items-center justify-between text-sm">
-                       <span className="text-gray-600 dark:text-gray-400">
-                         {selectedCourt.playCount} {selectedCourt.playCount === 1 ? 'session' : 'sessions'}
-                       </span>
-                       <span className="text-gray-600 dark:text-gray-400">
-                         {formatDuration(selectedCourt.totalDuration)}
-                       </span>
-                     </div>
-                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                       Last played: {formatLastPlayed(selectedCourt.lastPlayed)}
-                     </div>
-                     <div className="flex flex-wrap gap-1">
-                       {selectedCourt.sports.map((sport) => (
-                         <Badge key={sport} variant="secondary" className="text-xs">
-                           {sport}
-                         </Badge>
-                       ))}
-                       {selectedCourt.activityTypes.slice(0, 2).map((type) => (
-                         <Badge key={type} variant="outline" className="text-xs">
-                           {type}
-                         </Badge>
-                       ))}
-                       {selectedCourt.activityTypes.length > 2 && (
-                         <Badge variant="outline" className="text-xs">
-                           +{selectedCourt.activityTypes.length - 2} more
-                         </Badge>
-                       )}
-                     </div>
-                   </div>
-                 </CardContent>
-               </Card>
-             )}
+      {/* Selected Court Details */}
+      {selectedCourt && !isMobile && (
+        <Card>
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div className="flex-1 min-w-0">
+                <CardTitle className="text-lg truncate">
+                  {selectedCourt.clubName}
+                </CardTitle>
+                <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                  {selectedCourt.clubLocation || "No location"}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                className={`p-1 h-auto transition-colors ${
+                  isFavorite(selectedCourt.clubName, selectedCourt.clubLocation)
+                    ? 'text-yellow-500 hover:text-yellow-600'
+                    : 'text-gray-400 hover:text-yellow-500'
+                }`}
+                onClick={() => handleToggleFavorite(selectedCourt)}
+              >
+                <MapPin className="h-4 w-4" />
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-0">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-gray-600 dark:text-gray-400">
+                  {selectedCourt.playCount} {selectedCourt.playCount === 1 ? 'session' : 'sessions'}
+                </span>
+                <span className="text-gray-600 dark:text-gray-400">
+                  {formatDuration(selectedCourt.totalDuration)}
+                </span>
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Last played: {formatLastPlayed(selectedCourt.lastPlayed)}
+              </div>
+              <div className="flex flex-wrap gap-1">
+                {selectedCourt.sports.map((sport) => (
+                  <Badge key={sport} variant="secondary" className="text-xs">
+                    {sport}
+                  </Badge>
+                ))}
+                {selectedCourt.activityTypes.slice(0, 2).map((type) => (
+                  <Badge key={type} variant="outline" className="text-xs">
+                    {type}
+                  </Badge>
+                ))}
+                {selectedCourt.activityTypes.length > 2 && (
+                  <Badge variant="outline" className="text-xs">
+                    +{selectedCourt.activityTypes.length - 2} more
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-             {/* Mobile Court Details Sheet */}
-             {isMobile && selectedCourt && (
-               <Sheet open={showMobileDetails} onOpenChange={setShowMobileDetails}>
-                 <SheetContent side="bottom" className="h-[60vh]">
-                   <SheetHeader className="pb-4">
-                     <div className="flex items-start justify-between">
-                       <div className="flex-1 min-w-0">
-                         <SheetTitle className="text-lg truncate">
-                           {selectedCourt.clubName}
-                         </SheetTitle>
-                         <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-                           {selectedCourt.clubLocation || "No location"}
-                         </p>
-                       </div>
-                       <Button
-                         variant="ghost"
-                         size="sm"
-                         onClick={handleCloseMobileDetails}
-                         className="p-1 h-auto"
-                       >
-                         <X className="h-4 w-4" />
-                       </Button>
-                     </div>
-                   </SheetHeader>
-                   
-                   <div className="space-y-4">
-                     <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-2">
-                         <span className="text-sm font-medium">
-                           {selectedCourt.playCount} {selectedCourt.playCount === 1 ? 'session' : 'sessions'}
-                         </span>
-                         <span className="text-sm text-gray-600 dark:text-gray-400">
-                           {formatDuration(selectedCourt.totalDuration)}
-                         </span>
-                       </div>
-                       <Button
-                         variant="ghost"
-                         size="sm"
-                         className={`p-2 transition-colors ${
-                           isFavorite(selectedCourt.clubName, selectedCourt.clubLocation)
-                             ? 'text-yellow-500 hover:text-yellow-600'
-                             : 'text-gray-400 hover:text-yellow-500'
-                         }`}
-                         onClick={() => handleToggleFavorite(selectedCourt)}
-                       >
-                         <MapPin className="h-5 w-5" />
-                       </Button>
-                     </div>
-                     
-                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                       Last played: {formatLastPlayed(selectedCourt.lastPlayed)}
-                     </div>
-                     
-                     <div className="space-y-3">
-                       <div>
-                         <h4 className="text-sm font-medium mb-2">Sports</h4>
-                         <div className="flex flex-wrap gap-1">
-                           {selectedCourt.sports.map((sport) => (
-                             <Badge key={sport} variant="secondary" className="text-xs">
-                               {sport}
-                             </Badge>
-                           ))}
-                         </div>
-                       </div>
-                       
-                       <div>
-                         <h4 className="text-sm font-medium mb-2">Activity Types</h4>
-                         <div className="flex flex-wrap gap-1">
-                           {selectedCourt.activityTypes.map((type) => (
-                             <Badge key={type} variant="outline" className="text-xs">
-                               {type}
-                             </Badge>
-                           ))}
-                         </div>
-                       </div>
-                       
-                       {selectedCourt.players.length > 0 && (
-                         <div>
-                           <h4 className="text-sm font-medium mb-2">Players</h4>
-                           <div className="flex flex-wrap gap-1">
-                             {selectedCourt.players.slice(0, 5).map((player) => (
-                               <Badge key={player} variant="outline" className="text-xs">
-                                 {player}
-                               </Badge>
-                             ))}
-                             {selectedCourt.players.length > 5 && (
-                               <Badge variant="outline" className="text-xs">
-                                 +{selectedCourt.players.length - 5} more
-                               </Badge>
-                             )}
-                           </div>
-                         </div>
-                       )}
-                     </div>
-                   </div>
-                 </SheetContent>
-               </Sheet>
-             )}
+      {/* Mobile Court Details Sheet */}
+      {isMobile && selectedCourt && (
+        <Sheet open={showMobileDetails} onOpenChange={setShowMobileDetails}>
+          <SheetContent side="bottom" className="h-[60vh]">
+            <SheetHeader className="pb-4">
+              <div className="flex items-start justify-between">
+                <div className="flex-1 min-w-0">
+                  <SheetTitle className="text-lg truncate">
+                    {selectedCourt.clubName}
+                  </SheetTitle>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                    {selectedCourt.clubLocation || "No location"}
+                  </p>
+                </div>
+              </div>
+            </SheetHeader>
+            
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium">
+                    {selectedCourt.playCount} {selectedCourt.playCount === 1 ? 'session' : 'sessions'}
+                  </span>
+                  <span className="text-sm text-gray-600 dark:text-gray-400">
+                    {formatDuration(selectedCourt.totalDuration)}
+                  </span>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className={`p-2 transition-colors ${
+                    isFavorite(selectedCourt.clubName, selectedCourt.clubLocation)
+                      ? 'text-yellow-500 hover:text-yellow-600'
+                      : 'text-gray-400 hover:text-yellow-500'
+                  }`}
+                  onClick={() => handleToggleFavorite(selectedCourt)}
+                >
+                  <MapPin className="h-5 w-5" />
+                </Button>
+              </div>
+              
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Last played: {formatLastPlayed(selectedCourt.lastPlayed)}
+              </div>
+              
+              <div className="space-y-3">
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Sports</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedCourt.sports.map((sport) => (
+                      <Badge key={sport} variant="secondary" className="text-xs">
+                        {sport}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                <div>
+                  <h4 className="text-sm font-medium mb-2">Activity Types</h4>
+                  <div className="flex flex-wrap gap-1">
+                    {selectedCourt.activityTypes.map((type) => (
+                      <Badge key={type} variant="outline" className="text-xs">
+                        {type}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+                
+                {selectedCourt.players.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium mb-2">Players</h4>
+                    <div className="flex flex-wrap gap-1">
+                      {selectedCourt.players.slice(0, 5).map((player) => (
+                        <Badge key={player} variant="outline" className="text-xs">
+                          {player}
+                        </Badge>
+                      ))}
+                      {selectedCourt.players.length > 5 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{selectedCourt.players.length - 5} more
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+      )}
 
-             {/* Courts Summary */}
-       <div className="text-sm text-gray-600 dark:text-gray-400">
-         {courtsWithCoordinates.length > 0 ? (
-           <span>
-             Showing {courtsWithCoordinates.length} of {courts.length} courts on map
-             {courts.length !== courtsWithCoordinates.length && (
-               <span className="text-gray-500">
-                 {" "}({courts.length - courtsWithCoordinates.length} without coordinates)
-               </span>
-             )}
-             {!isMobile && (
-               <span className="text-gray-500 ml-2">
-                 • Zoom: {currentZoom}
-               </span>
-             )}
-           </span>
-         ) : courts.length > 0 ? (
-           <span>
-             No courts with location data available. 
-             <span className="text-gray-500 ml-1">
-               Add coordinates to see courts on the map.
-             </span>
-           </span>
-         ) : (
-           <span>No courts available</span>
-         )}
-       </div>
+      {/* Courts Summary */}
+      <div className="text-sm text-gray-600 dark:text-gray-400">
+        {courtsWithCoordinates.length > 0 ? (
+          <span>
+            Showing {courtsWithCoordinates.length} of {courts.length} courts on map
+            {courts.length !== courtsWithCoordinates.length && (
+              <span className="text-gray-500">
+                {" "}({courts.length - courtsWithCoordinates.length} without coordinates)
+              </span>
+            )}
+            {!isMobile && (
+              <span className="text-gray-500 ml-2">
+                • Zoom: {currentZoom}
+              </span>
+            )}
+          </span>
+        ) : courts.length > 0 ? (
+          <span>
+            No courts with location data available. 
+            <span className="text-gray-500 ml-1">
+              Add coordinates to see courts on the map.
+            </span>
+          </span>
+        ) : (
+          <span>No courts available</span>
+        )}
+      </div>
     </div>
   );
 } 

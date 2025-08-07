@@ -58,7 +58,7 @@ export default function ActivityDetail({ activity, isOwnActivity = false }: Acti
       </div>
 
       {/* Activity Title */}
-      <h3 className="text-medium font-bold mb-2 capitalize">
+      <h3 className="text-medium font-medium mb-2 capitalize">
         {activity.sport} {activity.activityType || 'Session'} by {isOwnActivity ? "JJ Jason" : "user or system generated"}
       </h3>
 
@@ -66,11 +66,11 @@ export default function ActivityDetail({ activity, isOwnActivity = false }: Acti
       <div className="grid grid-cols-3 gap-4 mb-4">
         <div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Type</div>
-          <div className="text-sm font-bold capitalize">{activity.activityType || 'Friendly'}</div>
+          <div className="text-sm font-medium capitalize">{activity.activityType || 'Friendly'}</div>
         </div>
         <div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Time on Court</div>
-          <div className="text-sm font-bold">{formatDuration(activity.duration)}</div>
+          <div className="text-sm font-medium">{formatDuration(activity.duration)}</div>
         </div>
         <div>
           <div className="text-xs text-gray-600 dark:text-gray-400">Court Feeling</div>
@@ -84,7 +84,7 @@ export default function ActivityDetail({ activity, isOwnActivity = false }: Acti
       {(activity.partner || activity.opponents) && (
         <div className="mb-3">
           <div className="text-xs text-gray-600 dark:text-gray-400">Played with</div>
-          <div className="text-sm font-bold">
+          <div className="text-sm font-medium">
             {formatParticipants(activity.partner, activity.opponents)}
           </div>
         </div>

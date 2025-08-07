@@ -31,6 +31,10 @@ export interface IStorage {
     sports: string[];
     activityTypes: string[];
     players: string[];
+    coordinates?: {
+      lat: number;
+      lng: number;
+    };
   }>>;
   
   // Favorites methods
@@ -88,6 +92,8 @@ export class MemStorage implements IStorage {
       clubName: insertActivity.clubName || null,
       clubLocation: insertActivity.clubLocation || null,
       clubMapLink: insertActivity.clubMapLink || null,
+      clubLatitude: insertActivity.clubLatitude || null,
+      clubLongitude: insertActivity.clubLongitude || null,
       sessionRating: insertActivity.sessionRating || null,
       racket: insertActivity.racket || null,
       partner: insertActivity.partner || null,
@@ -195,6 +201,10 @@ export class MemStorage implements IStorage {
       clubName: string;
       clubLocation: string;
       activities: Activity[];
+      coordinates?: {
+        lat: number;
+        lng: number;
+      };
     }>();
 
     activities.forEach(activity => {
@@ -206,7 +216,11 @@ export class MemStorage implements IStorage {
         courtsMap.set(key, {
           clubName: activity.clubName,
           clubLocation: activity.clubLocation || '',
-          activities: []
+          activities: [],
+          coordinates: activity.clubLatitude && activity.clubLongitude ? {
+            lat: parseFloat(activity.clubLatitude),
+            lng: parseFloat(activity.clubLongitude)
+          } : undefined
         });
       }
       
@@ -253,7 +267,8 @@ export class MemStorage implements IStorage {
         lastPlayed,
         sports,
         activityTypes,
-        players: Array.from(players)
+        players: Array.from(players),
+        coordinates: court.coordinates
       };
     }).sort((a, b) => b.playCount - a.playCount); // Sort by play frequency (most to least)
   }
