@@ -3,17 +3,17 @@ import { Activity } from "@shared/schema";
 import { useMemo } from "react";
 
 interface SportTabsProps {
-  selectedSport: string;
-  onSportChange: (sport: string) => void;
+  selectedSports: string[];
+  onSelectedSportsChange: (sports: string[]) => void;
   activities: Activity[];
 }
 
-export default function SportTabs({ selectedSport, onSportChange, activities }: SportTabsProps) {
+export default function SportTabs({ selectedSports, onSelectedSportsChange, activities }: SportTabsProps) {
   const availableSports = useMemo(() => {
     if (!activities || activities.length === 0) {
-      return [{ id: 'all', name: 'All Sports' }];
+      return [] as { id: string; name: string }[];
     }
-    
+
     const sportCounts = activities.reduce((acc, activity) => {
       acc[activity.sport] = (acc[activity.sport] || 0) + 1;
       return acc;
@@ -25,37 +25,37 @@ export default function SportTabs({ selectedSport, onSportChange, activities }: 
       { id: 'pickleball', name: 'Pickleball' },
     ];
 
-    const sports = [{ id: 'all', name: 'All Sports' }];
-    
-    // Only add sports that have recorded activities
-    allSports.forEach(sport => {
-      if (sportCounts[sport.id] > 0) {
-        sports.push(sport);
-      }
-    });
-
-    return sports;
+    // Only include sports that have recorded activities
+    return allSports.filter((sport) => sportCounts[sport.id] > 0);
   }, [activities]);
 
   return (
     <section className="p-4">
-      <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
-        {availableSports.map(sport => (
-          <Button
-            key={sport.id}
-            variant={selectedSport === sport.id ? "default" : "ghost"}
-            size="sm"
-            className={`flex-1 text-sm font-medium ${
-              selectedSport === sport.id 
-                ? 'bg-white dark:bg-gray-700 text-primary shadow-sm' 
-                : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200'
-            }`}
-            onClick={() => onSportChange(sport.id)}
-            data-testid={`sport-tab-${sport.id}`}
-          >
-            {sport.name}
-          </Button>
-        ))}
+      <div className="flex items-center gap-2">
+        {availableSports.map((sport) => {
+          const isSelected = selectedSports.includes(sport.id);
+          return (
+            <Button
+              key={sport.id}
+              variant={isSelected ? "default" : "outline"}
+              size="sm"
+              className={`text-sm ${
+                isSelected
+                  ? 'bg-primary text-white'
+                  : 'bg-white text-black border border-gray-300 hover:bg-white hover:text-black focus:bg-white active:bg-white'
+              }`}
+              onClick={() => {
+                const next = isSelected
+                  ? selectedSports.filter((s) => s !== sport.id)
+                  : [...selectedSports, sport.id];
+                onSelectedSportsChange(next);
+              }}
+              data-testid={`sport-tab-${sport.id}`}
+            >
+              {sport.name}
+            </Button>
+          );
+        })}
       </div>
     </section>
   );

@@ -7,6 +7,8 @@ import Home from "./pages/home";
 import Courts from "./pages/courts";
 import Friends from "./pages/friends";
 import Profile from "./pages/profile";
+import Settings from "./pages/settings";
+import AddEquipment from "./pages/add-equipment";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -16,6 +18,8 @@ function Router() {
       <Route path="/courts" component={Courts} />
       <Route path="/friends" component={Friends} />
       <Route path="/profile" component={Profile} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/equipment/add" component={AddEquipment} />
       <Route component={NotFound} />
     </Switch>
   );

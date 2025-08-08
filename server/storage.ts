@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Activity, type InsertActivity } from "@shared/schema";
+import { type User, type InsertUser, type Activity, type InsertActivity, type Racket } from "@shared/schema";
 import { randomUUID } from "crypto";
 
 export interface IStorage {
@@ -14,6 +14,11 @@ export interface IStorage {
   deleteActivity(id: string): Promise<boolean>;
   getActivitiesBySport(sport: string): Promise<Activity[]>;
   getActivitiesByDateRange(startDate: string, endDate: string): Promise<Activity[]>;
+
+  // Equipment methods
+  getRackets(): Promise<Racket[]>;
+  createRacket(racket: { brand: string; model: string }): Promise<Racket>;
+  updateRacket(id: string, update: Partial<Racket>): Promise<Racket | undefined>;
   
   // Courts methods
   getCourtsData(filters?: {
@@ -48,15 +53,49 @@ export class MemStorage implements IStorage {
   private users: Map<string, User>;
   private activities: Map<string, Activity>;
   private favorites: Set<string>;
+  private rackets: Map<string, Racket>;
 
   constructor() {
     this.users = new Map();
     this.activities = new Map();
     this.favorites = new Set();
+    this.rackets = new Map();
   }
 
   async getUser(id: string): Promise<User | undefined> {
     return this.users.get(id);
+  }
+
+  // Equipment methods
+  async getRackets(): Promise<Racket[]> {
+    return Array.from(this.rackets.values()).sort((a, b) => {
+      if (a.isActive !== b.isActive) return a.isActive ? -1 : 1; // active first
+      return (a.brand + a.model).localeCompare(b.brand + b.model);
+    });
+  }
+
+  async createRacket({ brand, model }: { brand: string; model: string }): Promise<Racket> {
+    const id = randomUUID();
+    const racket: Racket = {
+      id,
+      brand,
+      model,
+      isActive: true,
+      isBroken: false,
+      notes: null as unknown as string, // align with nullable in DB shape
+      imageUrl: null as unknown as string,
+      createdAt: new Date(),
+    };
+    this.rackets.set(id, racket);
+    return racket;
+  }
+
+  async updateRacket(id: string, update: Partial<Racket>): Promise<Racket | undefined> {
+    const existing = this.rackets.get(id);
+    if (!existing) return undefined;
+    const updated: Racket = { ...existing, ...update };
+    this.rackets.set(id, updated);
+    return updated;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {

@@ -14,6 +14,7 @@ import { X } from "lucide-react";
 import { z } from "zod";
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PlacesAutocomplete, type PlaceDetails } from "@/components/ui/places-autocomplete";
+import { useRackets } from "@/hooks/use-equipment";
 
 const formSchema = insertActivitySchema.extend({
   date: z.string().min(1, "Date is required"),
@@ -30,6 +31,7 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
   const [sessionRating, setSessionRating] = useState<number>(0);
   const [selectedPlace, setSelectedPlace] = useState<PlaceDetails | null>(null);
   const { toast } = useToast();
+  const { rackets } = useRackets();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -205,13 +207,31 @@ export default function AddActivityForm({ onClose }: AddActivityFormProps) {
 
           {/* Racket */}
           <div>
-            <Label htmlFor="racket">Racket Brand/Model (Optional)</Label>
-            <Input
-              id="racket"
-              placeholder="Wilson Bela Elite V2.5"
-              {...form.register("racket")}
-              data-testid="input-racket"
-            />
+            <Label htmlFor="racket">Racket (Optional)</Label>
+            {rackets && rackets.length > 0 ? (
+              <Select
+                onValueChange={(value) => form.setValue("racket", value)}
+                value={form.watch("racket") || undefined}
+              >
+                <SelectTrigger data-testid="select-racket">
+                  <SelectValue placeholder="Select a racket" />
+                </SelectTrigger>
+                <SelectContent>
+                  {rackets.map((r) => (
+                    <SelectItem key={r.id} value={`${r.brand} ${r.model}`}>
+                      {r.brand} {r.model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Input
+                id="racket"
+                placeholder="Brand Model"
+                {...form.register("racket")}
+                data-testid="input-racket"
+              />
+            )}
           </div>
 
           {/* Club/Venue Search */}

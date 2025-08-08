@@ -4,14 +4,13 @@ import { Activity } from "@shared/schema";
 import { parseCsvText, csvRowToActivity, CSV_DATA } from "@/lib/csv-parser";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import ActivityHeatmap from "../components/activity-heatmap";
-import AddActivityForm from "../components/add-activity-form";
 import RecentActivities from "../components/recent-activities";
-import SportTabs from "../components/sport-tabs";
-import StatsOverview from "../components/stats-overview";
+import StatsTab from "../components/stats-tab";
+import EquipmentTab from "../components/equipment-tab";
+import ProfileTabs from "../components/profile-tabs";
 import BottomNavigation from "../components/bottom-navigation";
 import { useState } from "react";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigation } from "@/hooks/use-navigation";
 
@@ -25,7 +24,7 @@ export default function Profile() {
   });
   
   const { toast } = useToast();
-  const { getCurrentPage } = useNavigation();
+  const { getCurrentPage, navigate } = useNavigation();
 
   // Initialize theme
   useEffect(() => {
@@ -96,38 +95,36 @@ export default function Profile() {
   return (
     <div className="min-h-screen flex flex-col max-w-md mx-auto bg-white dark:bg-gray-900 shadow-lg">
       {/* Header */}
-      <header className="bg-white text-black p-2 sticky top-0 z-30 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex items-center justify-center">
-          <div className="flex items-center space-x-3">
-            <h1 className="text-lg font-medium">You</h1>
-          </div>
+      <header className="bg-white text-black p-2 sticky top-0 z-30 border-gray-200">
+        <div className="relative flex items-center justify-center">
+          <h1 className="text-lg font-medium">You</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label="Settings"
+            onClick={() => navigate('settings')}
+            data-testid="profile-settings-button"
+            className="absolute right-2 top-1/2 -translate-y-1/2"
+          >
+            <SettingsIcon className="h-5 w-5" />
+          </Button>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto">
-        {/* Stats Overview */}
-        <StatsOverview stats={stats} />
-
-        {/* Activity Heatmap */}
-        <ActivityHeatmap activities={activities} />
-
-        {/* Sport Filter Tabs */}
-        <SportTabs 
-          selectedSport={selectedSport} 
-          onSportChange={setSelectedSport} 
-          activities={activities}
+      <main className="px-2 flex-1 overflow-y-auto">
+        <ProfileTabs
+          renderStats={() => (
+            <StatsTab activities={activities} />
+          )}
+          renderActivities={() => (
+            <RecentActivities activities={filteredActivities} isLoading={activitiesLoading} isOwnActivities={true} />
+          )}
+          renderEquipment={() => (
+            <EquipmentTab />
+          )}
         />
-
-        {/* Recent Activities */}
-        <RecentActivities 
-          activities={filteredActivities} 
-          isLoading={activitiesLoading} 
-          isOwnActivities={true}
-        />
-
-        {/* Bottom spacing for FAB */}
-        <div className="h-20"></div>
+        <div className="h-20" />
       </main>
 
       {/* Bottom Navigation */}

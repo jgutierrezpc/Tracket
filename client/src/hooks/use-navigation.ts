@@ -3,7 +3,7 @@ import { useLocation } from "wouter";
 export function useNavigation() {
   const [location, setLocation] = useLocation();
 
-  const getCurrentPage = (): 'home' | 'courts' | 'friends' | 'profile' => {
+  const getCurrentPage = (): 'home' | 'courts' | 'friends' | 'profile' | 'settings' => {
     switch (location) {
       case '/':
         return 'home';
@@ -13,6 +13,8 @@ export function useNavigation() {
         return 'friends';
       case '/profile':
         return 'profile';
+      case '/settings':
+        return 'settings';
       default:
         return 'home';
     }
@@ -31,6 +33,12 @@ export function useNavigation() {
         break;
       case 'profile':
         setLocation('/profile');
+        break;
+      case 'settings':
+        setLocation('/settings');
+        break;
+      case 'addEquipment':
+        setLocation('/equipment/add');
         break;
       default:
         setLocation('/');

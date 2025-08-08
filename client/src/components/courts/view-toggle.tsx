@@ -36,11 +36,6 @@ export default function ViewToggle({
         >
           <List className="h-4 w-4" />
           <span>List</span>
-          {listCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {listCount}
-            </Badge>
-          )}
         </Button>
         
         <Button
@@ -51,11 +46,6 @@ export default function ViewToggle({
         >
           <Map className="h-4 w-4" />
           <span>Map</span>
-          {mapCount > 0 && (
-            <Badge variant="secondary" className="text-xs">
-              {mapCount}
-            </Badge>
-          )}
         </Button>
       </div>
     </div>

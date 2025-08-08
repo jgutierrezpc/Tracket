@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertActivitySchema, updateActivitySchema } from "@shared/schema";
+import { insertActivitySchema, updateActivitySchema, rackets } from "@shared/schema";
 import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -23,6 +23,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json(activities);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch activities" });
+    }
+  });
+
+  // Equipment: Rackets CRUD (in-memory via storage adapter conventions)
+  app.get("/api/equipment/rackets", async (req, res) => {
+    try {
+      const all = await storage.getRackets?.();
+      res.json(all || []);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch rackets" });
+    }
+  });
+
+  app.post("/api/equipment/rackets", async (req, res) => {
+    try {
+      const { brand, model } = req.body || {};
+      if (!brand || !model) return res.status(400).json({ message: "brand and model are required" });
+      const created = await storage.createRacket?.({ brand, model });
+      res.status(201).json(created);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to create racket" });
+    }
+  });
+
+  app.patch("/api/equipment/rackets/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const updated = await storage.updateRacket?.(id, req.body || {});
+      if (!updated) return res.status(404).json({ message: "Racket not found" });
+      res.json(updated);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to update racket" });
     }
   });
 

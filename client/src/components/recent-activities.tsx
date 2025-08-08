@@ -1,14 +1,43 @@
 import { Activity } from "@shared/schema";
 import { formatDistanceToNow } from "date-fns";
 import ActivityDetail from "./activity-detail";
+import { Input } from "@/components/ui/input";
 
 interface RecentActivitiesProps {
   activities: Activity[];
   isLoading: boolean;
   isOwnActivities?: boolean;
+  pageSize?: number;
 }
 
-export default function RecentActivities({ activities, isLoading, isOwnActivities = false }: RecentActivitiesProps) {
+import { useState, useMemo } from "react";
+
+export default function RecentActivities({ activities, isLoading, isOwnActivities = false, pageSize = 20 }: RecentActivitiesProps) {
+  const [visibleCount, setVisibleCount] = useState<number>(pageSize);
+  const [query, setQuery] = useState<string>("");
+
+  const filteredActivities = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return activities;
+    return activities.filter((a) => {
+      const fields = [
+        a.date ?? "",
+        a.sport ?? "",
+        a.activityType ?? "",
+        a.partner ?? "",
+        a.clubName ?? "",
+        a.notes ?? "",
+      ].map((v) => String(v).toLowerCase());
+      return fields.some((f) => f.includes(q));
+    });
+  }, [activities, query]);
+
+  const visibleActivities = useMemo(
+    () => filteredActivities.slice(0, visibleCount),
+    [filteredActivities, visibleCount]
+  );
+  const hasMore = visibleCount < filteredActivities.length;
+
   if (isLoading) {
     return (
       <section className="p-4">
@@ -55,8 +84,20 @@ export default function RecentActivities({ activities, isLoading, isOwnActivitie
   return (
     <section className="p-4">
       <h2 className="text-medium font-medium mb-4">Recent Activities</h2>
+      <div className="mb-3">
+        <Input
+          type="search"
+          placeholder="Search activities..."
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setVisibleCount(pageSize);
+          }}
+          data-testid="activities-search-input"
+        />
+      </div>
       <div className="space-y-3">
-        {activities.map((activity) => (
+        {visibleActivities.map((activity) => (
           <ActivityDetail
             key={activity.id}
             activity={activity}
@@ -64,6 +105,17 @@ export default function RecentActivities({ activities, isLoading, isOwnActivitie
           />
         ))}
       </div>
+      {hasMore && (
+        <div className="mt-4 flex justify-center">
+          <button
+            className="px-4 py-2 text-sm bg-gray-100 dark:bg-gray-800 rounded-md border border-gray-200 dark:border-gray-700 hover:bg-gray-200 dark:hover:bg-gray-700"
+            onClick={() => setVisibleCount((c) => Math.min(c + pageSize, activities.length))}
+            data-testid="button-show-more"
+          >
+            Show More
+          </button>
+        </div>
+      )}
     </section>
   );
 }

@@ -6,7 +6,7 @@ import AddActivityForm from "./add-activity-form";
 import { useNavigation } from "@/hooks/use-navigation";
 
 interface BottomNavigationProps {
-  currentPage?: 'home' | 'courts' | 'friends' | 'profile';
+  currentPage?: 'home' | 'courts' | 'friends' | 'profile' | 'settings';
 }
 
 export default function BottomNavigation({ currentPage = 'home' }: BottomNavigationProps) {

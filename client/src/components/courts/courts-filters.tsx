@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Calendar, Filter, X, Search } from "lucide-react";
+import { Calendar, SlidersHorizontal, X, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -114,10 +114,7 @@ export default function CourtsFilters({
       {/* Filter Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Filter className="h-4 w-4 text-gray-600" />
-          <h3 className="text-sm font-medium text-gray-900 dark:text-gray-100">
-            Filters
-          </h3>
+ 
           {hasActiveFilters && (
             <Badge variant="secondary" className="text-xs">
               {getActiveFiltersCount()} active
@@ -142,8 +139,8 @@ export default function CourtsFilters({
       <Collapsible open={isExpanded} onOpenChange={onToggleExpanded}>
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
-            <span>Filter Options</span>
-            <Filter className="h-4 w-4" />
+            <span>Filter Courts</span>
+            <SlidersHorizontal className="h-4 w-4" />
           </Button>
         </CollapsibleTrigger>
         

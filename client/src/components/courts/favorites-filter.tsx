@@ -16,12 +16,12 @@ export default function FavoritesFilter({
   totalCourtsCount
 }: FavoritesFilterProps) {
   return (
-    <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-gray-800 rounded-lg">
-      <div className="flex items-center gap-3">
+    <div className="flex items-center justify-between p-2 dark:bg-gray-800 rounded-lg">
+      <div className="flex items-center gap-4">
         <div className="flex items-center gap-2">
           <Star className="h-4 w-4 text-yellow-500" />
           <Label htmlFor="favorites-filter" className="text-sm font-medium">
-            Show only favorites
+            Show favorites
           </Label>
         </div>
         <Switch
@@ -32,15 +32,6 @@ export default function FavoritesFilter({
       </div>
       
       <div className="text-sm text-gray-600 dark:text-gray-400">
-        {showOnlyFavorites ? (
-          <span>
-            Showing {favoritesCount} of {totalCourtsCount} courts
-          </span>
-        ) : (
-          <span>
-            {favoritesCount} favorite{favoritesCount !== 1 ? 's' : ''} • {totalCourtsCount} total
-          </span>
-        )}
       </div>
     </div>
   );
