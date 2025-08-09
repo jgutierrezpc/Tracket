@@ -47,7 +47,7 @@ describe('CourtsList', () => {
     render(<CourtsList {...defaultProps} isLoading={true} />);
     
     expect(screen.getByText('Loading courts...')).toBeInTheDocument();
-    expect(screen.getByText('Loading courts...')).not.toBeInTheDocument();
+    // No opposite assertion needed; loading should be visible
   });
 
   it('displays error state', () => {

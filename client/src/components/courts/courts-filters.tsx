@@ -37,6 +37,7 @@ export default function CourtsFilters({
   onToggleExpanded
 }: CourtsFiltersProps) {
   const [localPlayer, setLocalPlayer] = useState(filters.player || '');
+  const [internalExpanded, setInternalExpanded] = useState<boolean>(isExpanded);
 
   const handleFilterChange = (key: keyof CourtFilters, value: string | undefined) => {
     onFiltersChange({
@@ -114,6 +115,7 @@ export default function CourtsFilters({
       {/* Filter Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
+          <span className="text-sm font-medium">Filters</span>
  
           {hasActiveFilters && (
             <Badge variant="secondary" className="text-xs">
@@ -136,10 +138,16 @@ export default function CourtsFilters({
       </div>
 
       {/* Filter Controls */}
-      <Collapsible open={isExpanded} onOpenChange={onToggleExpanded}>
+      <Collapsible
+        open={internalExpanded}
+        onOpenChange={(next) => {
+          setInternalExpanded(next);
+          onToggleExpanded?.(next);
+        }}
+      >
         <CollapsibleTrigger asChild>
           <Button variant="outline" className="w-full justify-between">
-            <span>Filter Courts</span>
+            <span>Filter Options</span>
             <SlidersHorizontal className="h-4 w-4" />
           </Button>
         </CollapsibleTrigger>
@@ -151,7 +159,7 @@ export default function CourtsFilters({
               Date Range
             </label>
             <Select
-              value={filters.dateRange || 'all-time'}
+              value={filters.dateRange}
               onValueChange={handleDateRangeChange}
             >
               <SelectTrigger>
@@ -195,7 +203,7 @@ export default function CourtsFilters({
               Sport Type
             </label>
             <Select
-              value={filters.sport || 'all-sports'}
+              value={filters.sport ?? 'all-sports'}
               onValueChange={(value) => handleFilterChange('sport', value === 'all-sports' ? undefined : value)}
             >
               <SelectTrigger>
@@ -203,6 +211,7 @@ export default function CourtsFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-sports">All sports</SelectItem>
+                {/* options derived from availableSports */}
                 {availableSports.map((sport) => (
                   <SelectItem key={sport} value={sport}>
                     {sport.charAt(0).toUpperCase() + sport.slice(1)}
@@ -218,7 +227,7 @@ export default function CourtsFilters({
               Activity Type
             </label>
             <Select
-              value={filters.activityType || 'all-activities'}
+              value={filters.activityType ?? 'all-activities'}
               onValueChange={(value) => handleFilterChange('activityType', value === 'all-activities' ? undefined : value)}
             >
               <SelectTrigger>
@@ -226,6 +235,7 @@ export default function CourtsFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all-activities">All activities</SelectItem>
+                {/* options derived from availableActivityTypes */}
                 {availableActivityTypes.map((type) => (
                   <SelectItem key={type} value={type}>
                     {type.charAt(0).toUpperCase() + type.slice(1)}
@@ -251,6 +261,7 @@ export default function CourtsFilters({
               <Button
                 size="sm"
                 onClick={handlePlayerSearch}
+                aria-label="Search"
                 className="px-3"
               >
                 <Search className="h-3 w-3" />

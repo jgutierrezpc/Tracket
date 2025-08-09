@@ -19,8 +19,8 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, AlertCircle } from "lucide-react";
 
-// Import the map component directly instead of lazy loading
-import CourtsMap from "@/components/courts/courts-map";
+// Import the Mapbox map component directly instead of lazy loading
+import CourtsMap from "@/components/courts/courts-map-mapbox";
 
 export default function Courts() {
   const { getCurrentPage } = useNavigation();

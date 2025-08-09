@@ -10,8 +10,10 @@ Main Features:
 - [ ] Home page
 
 Debt:
-- [ ] Mapbox implementation `tasks-prd-mapbox-implementation.md`
+- [x] Mapbox implementation `tasks-prd-mapbox-implementation.md`
 - [ ] Search Club in Add Activity to show "my clubs" (clubs I have played at before), and "+ find new club" with the gmaps api
 - [ ] Nice icons for Padel/Tennis/Pickleball
 - [ ] New color scheme, coehesive
 - [ ] Week chart width fix, remove tick marks, reduce y axis height, add vs last week in stats & FIX This Week dates
+- [ ] Add sport to equipment
+- [ ] Cleaner look on map pin click, update popover UI
