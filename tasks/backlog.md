@@ -3,6 +3,7 @@
 Main Features:
 - [x] Courts page `prd-courts-page.md`. Need Map implementation. 
 - [x] Profile page with 3 Tabs: Stats, Activities, Equipment `prd-profile-tabs.md`
+- [ ] Stats by month
 - [ ] Week streaks like strava
 - [ ] Friends page
 - [ ] Create account + Auth

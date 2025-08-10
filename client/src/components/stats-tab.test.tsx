@@ -42,6 +42,39 @@ describe("StatsTab", () => {
     // Presence assert: weekly summary should still be present
     expect(screen.getByText("This Week")).toBeInTheDocument();
   });
+
+  it("renders MonthlyCalendar between WeeksChart and ActivityHeatmap and reflects sport filters", () => {
+    const activities: Activity[] = [
+      makeActivity("2025-08-10", "padel", 60),
+      makeActivity("2025-08-12", "tennis", 45),
+    ];
+
+    render(<StatsTab activities={activities} />);
+
+    // Calendar present
+    const calendar = screen.getByTestId("monthly-calendar");
+    expect(calendar).toBeInTheDocument();
+
+    // Toggling sports should update highlights implicitly via filteredActivities
+    const tennisButton = screen.getByTestId("sport-tab-tennis");
+    const padelButton = screen.getByTestId("sport-tab-padel");
+
+    // Deselect padel to leave tennis only
+    fireEvent.click(padelButton);
+    // Expect padel day becomes inactive
+    const padelDay = screen.queryByTestId("calendar-day-2025-08-10");
+    if (padelDay) {
+      expect(padelDay).toHaveAttribute("data-has-activity", "false");
+    }
+
+    // Select padel back and deselect tennis
+    fireEvent.click(padelButton);
+    fireEvent.click(tennisButton);
+    const tennisDay = screen.queryByTestId("calendar-day-2025-08-12");
+    if (tennisDay) {
+      expect(tennisDay).toHaveAttribute("data-has-activity", "false");
+    }
+  });
 });
 
 

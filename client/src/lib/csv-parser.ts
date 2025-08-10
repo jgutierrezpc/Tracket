@@ -75,6 +75,7 @@ export function csvRowToActivity(row: CsvRow): InsertActivity {
 }
 
 export const CSV_DATA = `date,sport,activity type,duration minutes,club name,club location,club map link,club latitude,club longitude,session rating,racket,partner,oponents,notes
+2025-08-03,padel,friendly,90,Padel Town,"Mag warehouses, Plot 911 - Al Quoz Industrial Area 2 - Dubai",https://maps.app.goo.gl/UCJaZnernuPw3NSj8,25.14082667,55.25946167,4,Wilson Bela Elite V2.5,Alvaro,"Ricardo, Tomas",
 2025-07-26,padel,friendly,90,Padel Town,"Mag warehouses, Plot 911 - Al Quoz Industrial Area 2 - Dubai",https://maps.app.goo.gl/UCJaZnernuPw3NSj8,25.14082667,55.25946167,3,Wilson Bela Elite V2.5,Rami,"Ricardo, Tomas",
 2025-07-19,padel,tournament,210,Padel Pro Al Quoz,Al Quoz - Al Quoz Industrial Area 2 - Dubai,https://maps.app.goo.gl/fBZJxcYssLYKn9Ft8,25.12536306,55.2402342,2,Wilson Bela Elite V2.5,Rami,Various,
 2025-07-17,padel,friendly,60,Match Point Padel,ABA AVENUE - 93 24B Street - Al Quoz - Al Quoz Industrial Area 2 - Dubai,https://maps.app.goo.gl/UurvvaUXD4jwuepM9,25.12457595,55.2441098,4,Wilson Bela Elite V2.5,Simon,"Miguel, Daniel",

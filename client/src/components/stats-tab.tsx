@@ -4,6 +4,7 @@ import StatsOverview from "./stats-overview";
 import WeeksChart from "./weeks-chart";
 import ActivityHeatmap from "./activity-heatmap";
 import SportTabs from "./sport-tabs";
+import MonthlyCalendar from "./monthly-calendar";
 
 interface StatsTabProps {
   activities: Activity[];
@@ -43,6 +44,7 @@ export default function StatsTab({ activities, className }: StatsTabProps) {
         />
       )}
       <WeeksChart activities={filteredActivities} />
+      <MonthlyCalendar activities={filteredActivities} />
       <ActivityHeatmap activities={filteredActivities} />
       
     </div>

@@ -30,7 +30,7 @@ export default function SportTabs({ selectedSports, onSelectedSportsChange, acti
   }, [activities]);
 
   return (
-    <section className="p-4">
+    <section className="p-2">
       <div className="flex items-center gap-2">
         {availableSports.map((sport) => {
           const isSelected = selectedSports.includes(sport.id);
@@ -39,7 +39,7 @@ export default function SportTabs({ selectedSports, onSelectedSportsChange, acti
               key={sport.id}
               variant={isSelected ? "default" : "outline"}
               size="sm"
-              className={`text-sm ${
+              className={`text-xs ${
                 isSelected
                   ? 'bg-primary text-white'
                   : 'bg-white text-black border border-gray-300 hover:bg-white hover:text-black focus:bg-white active:bg-white'
