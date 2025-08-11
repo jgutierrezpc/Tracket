@@ -27,6 +27,7 @@ interface MonthLabel {
 
 export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
   const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const currentYear = new Date().getFullYear();
 
   const heatmapData = useMemo(() => {
     const data: HeatmapData = {};
@@ -137,29 +138,39 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
 
   return (
     <section className="p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-medium font-medium">Activity Calendar</h2>
-        <div className="flex items-center space-x-4">
-          
-          {/* Legend */}
-          <div className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
-            <span>Less</span>
-            <div className="flex space-x-1">
-              <div className="w-1.5 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-200 dark:bg-green-900 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-400 dark:bg-green-700 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-600 dark:bg-green-500 rounded-sm"></div>
-              <div className="w-1.5 h-1.5 bg-green-800 dark:bg-green-300 rounded-sm"></div>
-            </div>
-            <span>More</span>
-          </div>
+      <div className="flex items-center justify-between mb-4 mt-2">
+        <h2 className="text-medium font-medium">
+          {selectedYear === currentYear ? 'This Year' : String(selectedYear)}
+        </h2>
+        <div className="flex items-center space-x-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSelectedYear(prev => prev - 1)}
+            className="h-8 w-8"
+            data-testid="button-prev-year"
+            aria-label="Previous year"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSelectedYear(prev => Math.min(prev + 1, currentYear))}
+            className="h-8 w-8"
+            data-testid="button-next-year"
+            aria-label="Next year"
+            disabled={selectedYear >= currentYear}
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       
       <div className="dark:bg-gray-800 p-0 rounded-lg">        
         <div className="relative">
-          {/* Sticky day labels (left side) */}
-          <div className="absolute left-0 top-0 z-10 dark:bg-gray-800">
+          {/* Day labels (left side) - ensure no interference with bottom nav */}
+          <div className="absolute left-0 top-0 z-0 pointer-events-none">
             <div className="flex flex-col justify-start text-xs text-gray-600 dark:text-gray-400 pr-1">
               <div className="h-4 mb-1.5"></div> {/* Space for month labels */}
               {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, i) => (
@@ -215,29 +226,19 @@ export default function ActivityHeatmap({ activities }: ActivityHeatmapProps) {
             ))}
           </div>
           
-          {/* Year Navigation */}
-          <div className="flex justify-center items-center space-x-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedYear(prev => prev - 1)}
-              className="h-8 w-8"
-              data-testid="button-prev-year"
-            >
-              <ChevronLeft className="h-4 w-4" />
-            </Button>
-            <span className="text-xs font-medium text-center">
-              {selectedYear}
-            </span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSelectedYear(prev => prev + 1)}
-              className="h-8 w-8"
-              data-testid="button-next-year"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+          {/* Legend (moved below chart, centered) */}
+          <div className="flex justify-center items-center mt-2">
+            <div className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
+              <span>Less</span>
+              <div className="flex space-x-1">
+                <div className="w-1.5 h-1.5 bg-gray-200 dark:bg-gray-700 rounded-sm"></div>
+                <div className="w-1.5 h-1.5 bg-green-200 dark:bg-green-900 rounded-sm"></div>
+                <div className="w-1.5 h-1.5 bg-green-400 dark:bg-green-700 rounded-sm"></div>
+                <div className="w-1.5 h-1.5 bg-green-600 dark:bg-green-500 rounded-sm"></div>
+                <div className="w-1.5 h-1.5 bg-green-800 dark:bg-green-300 rounded-sm"></div>
+              </div>
+              <span>More</span>
+            </div>
           </div>
 
         </div>

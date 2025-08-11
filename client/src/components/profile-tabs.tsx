@@ -66,13 +66,18 @@ export default function ProfileTabs({
 
   return (
     <Tabs value={selectedTab} onValueChange={handleTabChange} className={cn("w-full", className)}>
-      <TabsList className="grid grid-cols-3 w-full">
+      <div
+        className="sticky z-20 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800"
+        style={{ position: "sticky", top: "var(--profile-header-h, 48px)" }}
+      >
+        <TabsList className="grid grid-cols-3 w-full">
         {tabs.map((tab) => (
           <TabsTrigger key={tab.id} value={tab.id} data-testid={`profile-tab-${tab.id}`}>
             {tab.label}
           </TabsTrigger>
         ))}
-      </TabsList>
+        </TabsList>
+      </div>
 
       <TabsContent value="stats" data-testid="profile-tabpanel-stats">
         {renderStats ? renderStats() : null}

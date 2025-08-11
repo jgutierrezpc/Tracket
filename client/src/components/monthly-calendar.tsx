@@ -69,7 +69,7 @@ export default function MonthlyCalendar({ activities, className }: MonthlyCalend
     return weeks;
   };
 
-  const weekdayLabels = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+  const weekdayLabels = ["M", "T", "W", "T", "F", "S", "S"];
   const weeks = buildWeeksForMonth(currentMonth);
 
   const formatLocalDateKey = (date: Date): string => {
@@ -152,7 +152,7 @@ export default function MonthlyCalendar({ activities, className }: MonthlyCalend
         data-month-tournaments={monthlyTournamentsCount}
       />
       <div className="flex items-center justify-between px-2">
-        <div className="text-sm font-medium" data-testid="calendar-title">
+        <div className="text-medium font-medium" data-testid="calendar-title">
           {currentMonth.toLocaleString(undefined, { month: "long", year: "numeric" })}
         </div>
         <div className="flex items-center gap-1">
@@ -179,10 +179,10 @@ export default function MonthlyCalendar({ activities, className }: MonthlyCalend
       </div>
 
       {/* 3.3 Subtitle: labels top row, stats bottom row, no borders */}
-      <div className="mt-2 px-2" data-testid="calendar-subtitle">
+      <div className="mt-2 mb-2 px-2" data-testid="calendar-subtitle">
         <div className="grid grid-cols-3 text-center text-xs text-muted-foreground">
-          <div>Sessions</div>
-          <div>Duration</div>
+          <div>Total Sessions</div>
+          <div>Time on Court</div>
           <div>Tournaments</div>
         </div>
         <div className="grid grid-cols-3 text-center text-base font-semibold mt-0.5">
@@ -198,7 +198,7 @@ export default function MonthlyCalendar({ activities, className }: MonthlyCalend
         </div>
       </div>
 
-      <div className="mt-2 px-2" aria-label="weekday-labels" role="row">
+      <div className="mt-2 mb-2 px-2" aria-label="weekday-labels" role="row">
         <div className="grid grid-cols-8 gap-1 text-xs text-muted-foreground items-center">
           {weekdayLabels.map((label) => (
             <div key={label} className="text-center">
@@ -209,9 +209,9 @@ export default function MonthlyCalendar({ activities, className }: MonthlyCalend
         </div>
       </div>
 
-      <div className="mt-1 space-y-1 px-2" data-testid="monthly-calendar-grid">
+      <div className="mt-1 space-y-2 px-2" data-testid="monthly-calendar-grid">
         {weeks.map((week, idx) => (
-          <div key={idx} className="grid grid-cols-8 gap-1" role="row">
+          <div key={idx} className="grid grid-cols-8 gap-2" role="row">
             {week.map((date, colIdx) => {
               if (!date) {
                 return (
@@ -225,7 +225,7 @@ export default function MonthlyCalendar({ activities, className }: MonthlyCalend
               const key = formatLocalDateKey(date);
               const isActive = Boolean(activitiesByLocalDate[key] && activitiesByLocalDate[key].length > 0);
               const baseClasses =
-                "w-full aspect-square rounded-md text-center text-sm leading-none flex items-center justify-center ";
+                "w-full aspect-square rounded-full text-center text-sm leading-none flex items-center justify-center ";
               const dateStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
               const isToday = dateStart.getTime() === todayStart.getTime();
               const isPast = dateStart < todayStart || isToday;

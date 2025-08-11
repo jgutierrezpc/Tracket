@@ -20,7 +20,7 @@ export default function ViewToggle({
   className = ""
 }: ViewToggleProps) {
   return (
-    <div className={`flex items-center gap-2 p-2 bg-gray-50 dark:bg-gray-800 rounded-lg ${className}`}>
+    <div className={`flex items-center gap-2 p-2 dark:bg-gray-800 rounded-lg ${className}`}>
       <div className={`flex items-center gap-1 ${className}`}>
         <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
           View:
